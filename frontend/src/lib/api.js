@@ -6,7 +6,7 @@
  * dev and a deployed backend in prod without touching component code.
  */
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 /**
  * Build a full URL from a path and an optional params object. Only entries
