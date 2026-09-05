@@ -13,10 +13,12 @@ GF Restaurant App is a web app that helps people with celiac disease and gluten 
 - ESLint
 
 **Backend**
-- TBD
+- [Node.js](https://nodejs.org/) + [Express 5](https://expressjs.com/) (ES modules)
+- [Mongoose](https://mongoosejs.com/) ODM
+- [dotenv](https://github.com/motdotla/dotenv) for env vars, [cors](https://github.com/expressjs/cors) middleware
 
 **Database**
-- TBD
+- [MongoDB](https://www.mongodb.com/)
 
 **Auth**
 - Clerk (planned — see [Auth strategy](#auth-strategy))
@@ -39,7 +41,33 @@ gf-restaurant-app/
 
 ## Backend folder structure and conventions
 
-TBD - to be scaffolded
+```
+backend/
+├── config/
+│   └── db.js              # MongoDB connection helper
+├── controllers/           # One file per resource — request handlers
+├── models/                # Mongoose schemas / models (one per resource)
+├── routes/
+│   └── index.js           # Aggregates per-resource route modules into one router
+├── middleware/
+│   └── errorHandler.js    # Centralized Express error handler
+├── utils/                 # Shared helper functions
+├── validators/            # Request-body / params validation (kept separate from controllers)
+├── server.js              # Entry point: loads env, wires middleware, connects DB, listens
+├── .env.example           # Documented env var names (no values)
+├── .env                   # Real values (git-ignored)
+├── .gitignore
+└── package.json
+```
+
+**Conventions**
+
+- **ES modules** (`"type": "module"`) — use `import` / `export`, not `require`.
+- **One controller file per resource** in `controllers/` (e.g. `restaurants.controller.js`).
+- **One route file per resource** in `routes/`, all imported and combined in `routes/index.js`.
+- **All API routes are mounted under `/api`** (e.g. `GET /api/restaurants`).
+- **Validators live in `validators/`**, kept separate from controllers so request-shape rules can be reused and unit-tested independently.
+- **Error handling is centralized** in `middleware/errorHandler.js`, registered last in `server.js`; throw errors with a `.status` field to control the HTTP response code.
 
 ## Data models
 
@@ -51,7 +79,10 @@ _None yet._
 
 ## Environment variables
 
-_None yet._
+Defined in `backend/.env` (real values, git-ignored) and documented in `backend/.env.example`:
+
+- `PORT` — HTTP port the API listens on (defaults to `5000`)
+- `MONGODB_URI` — MongoDB connection string
 
 ## Auth strategy
 
@@ -61,6 +92,7 @@ Auth will be handled with [Clerk](https://clerk.com/). This is planned for a lat
 
 - **Class 3** — Monorepo scaffolded: created `frontend/` (Next.js, App Router, JavaScript, Tailwind CSS, ESLint, `src/` directory) and empty `backend/` folder; added root `README.md` and `PROJECT_OVERVIEW.md`. ✅ Done
 - **Class 3** — Homepage shell built with placeholder data: `Header`, `Footer`, `RestaurantCard`, and `ForumRow` components in `src/components/`; homepage (`src/app/page.js`) composes them with a hero section, featured restaurants, popular search pills, and recent forum discussions, all styled with Tailwind. ✅ Done
+- **Class 4** — Backend shell scaffolded: Node.js + Express (ES modules) with the folder structure above, `config/db.js` MongoDB connector, aggregated router in `routes/index.js` (mounted at `/api`, exposes `GET /api/health`), centralized `middleware/errorHandler.js`, permissive CORS + JSON body parsing, `.env` / `.env.example` (`PORT`, `MONGODB_URI`), and installed `express`, `mongoose`, `dotenv`, `cors`. No resources scaffolded yet. ✅ Done
 
 ## Known issues / open items
 
