@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RestaurantCard from "@/components/RestaurantCard";
@@ -26,14 +28,30 @@ const featuredRestaurants = [
   },
 ];
 
+// Each pill maps a display label to the query params the /restaurants page
+// understands. The backend only supports `name` filtering right now, so
+// everything routes through that; once a `type` filter is added, we can
+// change specific pills' params without touching UI code.
 const popularSearches = [
-  "Pizza",
-  "Bakery",
-  "Breakfast",
-  "Vegan + GF",
-  "Brunch",
-  "Fast Casual",
+  { label: "Pizza", params: { name: "pizza" } },
+  { label: "Bakery", params: { name: "bakery" } },
+  { label: "Breakfast", params: { name: "breakfast" } },
+  { label: "Vegan + GF", params: { name: "vegan" } },
+  { label: "Brunch", params: { name: "brunch" } },
+  { label: "Fast Casual", params: { name: "casual" } },
 ];
+
+/** Build a /restaurants URL from a params object, skipping empty values. */
+function restaurantsHref(params) {
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value != null && String(value).trim() !== "") {
+      qs.set(key, String(value).trim());
+    }
+  }
+  const s = qs.toString();
+  return s ? `/restaurants?${s}` : "/restaurants";
+}
 
 const forumDiscussions = [
   {
@@ -73,19 +91,26 @@ export default function Home() {
               actually ask &quot;is the fryer shared?&quot;
             </p>
 
-            <div className="mt-2 flex w-full max-w-xl flex-col gap-3 rounded-2xl bg-white p-2 shadow-md sm:flex-row">
+            {/* Plain GET form → the browser navigates to
+                /restaurants?name=<input value> on submit. No JS needed. */}
+            <form
+              action="/restaurants"
+              method="GET"
+              className="mt-2 flex w-full max-w-xl flex-col gap-3 rounded-2xl bg-white p-2 shadow-md sm:flex-row"
+            >
               <input
                 type="text"
+                name="name"
                 placeholder="Search by restaurant, cuisine, or city..."
                 className="flex-1 rounded-xl border-0 bg-transparent px-4 py-3 text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
               <button
-                type="button"
+                type="submit"
                 className="rounded-xl bg-orange-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-orange-700"
               >
                 Search
               </button>
-            </div>
+            </form>
 
             <button
               type="button"
@@ -116,14 +141,14 @@ export default function Home() {
               Popular Searches
             </h2>
             <div className="mt-6 flex flex-wrap gap-3">
-              {popularSearches.map((term) => (
-                <button
-                  key={term}
-                  type="button"
+              {popularSearches.map(({ label, params }) => (
+                <Link
+                  key={label}
+                  href={restaurantsHref(params)}
                   className="rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition-colors hover:border-orange-400 hover:bg-orange-100 hover:text-orange-800"
                 >
-                  {term}
-                </button>
+                  {label}
+                </Link>
               ))}
             </div>
           </div>

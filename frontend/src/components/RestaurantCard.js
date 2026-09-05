@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 /**
  * Feature-flag → human label map. Used to render a short list of prominent
  * safety features as tag pills on the card.
@@ -29,12 +31,15 @@ function formatLocation(address) {
 export default function RestaurantCard({ restaurant }) {
   if (!restaurant) return null;
 
-  const { name, address, imageUrl, features } = restaurant;
+  const { _id, name, address, imageUrl, features } = restaurant;
   const location = formatLocation(address);
   const tags = buildFeatureTags(features);
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm transition-shadow hover:shadow-md">
+    <Link
+      href={`/restaurants/${_id}`}
+      className="flex flex-col overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+    >
       {imageUrl ? (
         // Placeholder images from the seed live on example.com; using a plain
         // <img> here keeps things simple and avoids next/image remotePatterns
@@ -69,6 +74,6 @@ export default function RestaurantCard({ restaurant }) {
           </div>
         )}
       </div>
-    </div>
+    </Link>
   );
 }
