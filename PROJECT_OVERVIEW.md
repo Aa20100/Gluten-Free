@@ -71,11 +71,62 @@ backend/
 
 ## Data models
 
-_None yet._
+### Restaurant (`backend/models/restaurant.model.js`)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `name` | String | **required**, trimmed |
+| `description` | String | |
+| `address.street` | String | |
+| `address.city` | String | |
+| `address.state` | String | |
+| `address.zip` | String | |
+| `address.country` | String | |
+| `location.type` | String | GeoJSON, enum `["Point"]`, default `"Point"` |
+| `location.coordinates` | [Number] | `[longitude, latitude]`, indexed as `2dsphere` |
+| `phone` | String | |
+| `website` | String | |
+| `imageUrl` | String | |
+| `cuisine` | [String] | default `[]` |
+| `restaurantType` | [String] | enum: `breakfast`, `lunch`, `dinner`, `bakery`, `coffee_shop`, `fast_food`, `dessert`, `fine_dining` |
+| `dietary.glutenFree` | Boolean | default `false` |
+| `dietary.dairyFree` | Boolean | default `false` |
+| `dietary.eggFree` | Boolean | default `false` |
+| `dietary.nutFree` | Boolean | default `false` |
+| `dietary.peanutFree` | Boolean | default `false` |
+| `dietary.treeNutFree` | Boolean | default `false` |
+| `dietary.soyFree` | Boolean | default `false` |
+| `dietary.vegetarian` | Boolean | default `false` |
+| `dietary.vegan` | Boolean | default `false` |
+| `dietary.halal` | Boolean | default `false` |
+| `dietary.kosher` | Boolean | default `false` |
+| `dietary.shellfishFree` | Boolean | default `false` |
+| `dietary.sesameFree` | Boolean | default `false` |
+| `features.dedicatedGfKitchen` | Boolean | default `false` |
+| `features.separateFryer` | Boolean | default `false` |
+| `features.gfMenu` | Boolean | default `false` |
+| `features.gfDesserts` | Boolean | default `false` |
+| `features.certifiedGlutenFree` | Boolean | default `false` |
+| `features.staffTrainedForCeliac` | Boolean | default `false` |
+| `features.crossContaminationPrecautions` | Boolean | default `false` |
+| `averageRating` | Number | default `0` |
+| `reviewCount` | Number | default `0` |
+| `createdAt` | Date | auto (via `timestamps`) |
+| `updatedAt` | Date | auto (via `timestamps`) |
 
 ## API endpoints
 
-_None yet._
+All routes are mounted under `/api`.
+
+### Restaurants
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/api/restaurants` | List restaurants. Optional query params: `name`, `city` (case-insensitive partial match); `state`, `zip` (exact match). |
+| `GET` | `/api/restaurants/:id` | Fetch one restaurant by id. |
+| `POST` | `/api/restaurants` | Create a restaurant. Body validated (required: `name`). Returns `201` + created doc. |
+| `PUT` | `/api/restaurants/:id` | Update a restaurant. Body validated. Returns updated doc. |
+| `DELETE` | `/api/restaurants/:id` | Delete a restaurant. Returns `204`. |
 
 ## Environment variables
 
@@ -93,6 +144,7 @@ Auth will be handled with [Clerk](https://clerk.com/). This is planned for a lat
 - **Class 3** — Monorepo scaffolded: created `frontend/` (Next.js, App Router, JavaScript, Tailwind CSS, ESLint, `src/` directory) and empty `backend/` folder; added root `README.md` and `PROJECT_OVERVIEW.md`. ✅ Done
 - **Class 3** — Homepage shell built with placeholder data: `Header`, `Footer`, `RestaurantCard`, and `ForumRow` components in `src/components/`; homepage (`src/app/page.js`) composes them with a hero section, featured restaurants, popular search pills, and recent forum discussions, all styled with Tailwind. ✅ Done
 - **Class 4** — Backend shell scaffolded: Node.js + Express (ES modules) with the folder structure above, `config/db.js` MongoDB connector, aggregated router in `routes/index.js` (mounted at `/api`, exposes `GET /api/health`), centralized `middleware/errorHandler.js`, permissive CORS + JSON body parsing, `.env` / `.env.example` (`PORT`, `MONGODB_URI`), and installed `express`, `mongoose`, `dotenv`, `cors`. No resources scaffolded yet. ✅ Done
+- **Class 4** — Restaurant resource built end-to-end: `models/restaurant.model.js` (schema with address, GeoJSON `location` + `2dsphere` index, dietary flags, features, ratings), `controllers/restaurant.controller.js` (async CRUD with try/catch → `next(err)`, `name`/`city` case-insensitive partial + `state`/`zip` exact query filters), `validators/restaurant.validator.js` (hand-rolled create/update middleware), `routes/restaurant.routes.js` (mounted at `/restaurants` from `routes/index.js` → full paths under `/api/restaurants`). Added `utils/seed.js` that wipes the collection and inserts 19 realistic sample restaurants across Austin, Portland, Denver, Chicago, NYC, and SF with varied dietary/features/type data. Verified: server boots, seed runs, `GET /api/restaurants` returns 19, `?city=austin` returns 4, full CRUD path returns correct status codes (201/200/204/400/404). ✅ Done
 
 ## Known issues / open items
 

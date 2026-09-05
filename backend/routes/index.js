@@ -1,16 +1,15 @@
 import { Router } from "express";
 
-// Per-resource route modules will be imported and mounted here as we add them.
-// Example (future):
-//   import restaurantRoutes from "./restaurants.js";
-//   router.use("/restaurants", restaurantRoutes);
+import restaurantRoutes from "./restaurant.routes.js";
 
 const router = Router();
 
-// Simple liveness check so we can verify the API is reachable before any
-// resources exist.
+// Simple liveness check so we can verify the API is reachable.
 router.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
+
+// Resource routers — one per resource, all mounted under /api by server.js.
+router.use("/restaurants", restaurantRoutes);
 
 export default router;
