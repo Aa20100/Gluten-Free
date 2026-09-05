@@ -3,21 +3,26 @@ import Footer from "@/components/Footer";
 import RestaurantCard from "@/components/RestaurantCard";
 import ForumRow from "@/components/ForumRow";
 
+// Placeholder data shaped like the backend Restaurant model so RestaurantCard
+// can render it directly. Swap for a real fetch of featured restaurants later.
 const featuredRestaurants = [
   {
+    _id: "featured-1",
     name: "Harvest & Hearth",
-    city: "Austin, TX",
-    tags: ["GF Menu", "Dedicated Fryer"],
+    address: { city: "Austin", state: "TX" },
+    features: { gfMenu: true, separateFryer: true },
   },
   {
+    _id: "featured-2",
     name: "The Tender Fork",
-    city: "Portland, OR",
-    tags: ["Celiac Safe", "GF Menu"],
+    address: { city: "Portland", state: "OR" },
+    features: { gfMenu: true, staffTrainedForCeliac: true },
   },
   {
+    _id: "featured-3",
     name: "Sunny Side Café",
-    city: "Denver, CO",
-    tags: ["Dedicated Fryer", "Nut-Free Options"],
+    address: { city: "Denver", state: "CO" },
+    features: { separateFryer: true, dedicatedGfKitchen: true },
   },
 ];
 
@@ -99,7 +104,7 @@ export default function Home() {
           </h2>
           <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {featuredRestaurants.map((restaurant) => (
-              <RestaurantCard key={restaurant.name} {...restaurant} />
+              <RestaurantCard key={restaurant._id} restaurant={restaurant} />
             ))}
           </div>
         </section>

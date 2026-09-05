@@ -37,7 +37,14 @@ gf-restaurant-app/
 
 - `src/app/` — Next.js App Router routes and layouts (e.g. `page.js`, `layout.js`, `globals.css`). Each folder under `app/` maps to a URL route.
 - `src/components/` — Reusable, presentational React components shared across pages (e.g. `Header`, `Footer`, `RestaurantCard`, `ForumRow`). Composed together by pages in `src/app/`.
-- `src/lib/` — Reserved for shared utilities, API client helpers, and constants as the app grows. Empty for now.
+- `src/lib/` — Shared utilities and API-client helpers. Currently: `api.js`, which centralizes all backend calls (`getRestaurants`, `getRestaurantById`) and reads the backend base URL from `NEXT_PUBLIC_API_URL`.
+
+## Frontend pages
+
+| Path | File | Description |
+| --- | --- | --- |
+| `/` | `src/app/page.js` | Homepage: header, hero + search, featured restaurants, popular searches, recent forum discussions, footer. Uses placeholder data. |
+| `/restaurants` | `src/app/restaurants/page.js` | Restaurant listing. Client component that reads `name` / `city` / `state` / `zip` from the URL query string, fetches `GET /api/restaurants` via `src/lib/api.js`, and renders results as a grid of `RestaurantCard`s. Includes loading / empty / error states and a 4-field search form; submitting the form updates the URL, which triggers a refetch. |
 
 ## Backend folder structure and conventions
 
@@ -130,10 +137,14 @@ All routes are mounted under `/api`.
 
 ## Environment variables
 
-Defined in `backend/.env` (real values, git-ignored) and documented in `backend/.env.example`:
+**Backend** — defined in `backend/.env` (real values, git-ignored) and documented in `backend/.env.example`:
 
 - `PORT` — HTTP port the API listens on (defaults to `5000`)
 - `MONGODB_URI` — MongoDB connection string
+
+**Frontend** — defined in `frontend/.env.local` (real values, git-ignored by Next.js) and documented in `frontend/.env.example`:
+
+- `NEXT_PUBLIC_API_URL` — Base URL of the backend API, ending in `/api` (defaults to `http://localhost:5000/api` in `src/lib/api.js` if unset). Any `NEXT_PUBLIC_*` var is inlined into the client bundle at build time.
 
 ## Auth strategy
 
@@ -145,6 +156,7 @@ Auth will be handled with [Clerk](https://clerk.com/). This is planned for a lat
 - **Class 3** — Homepage shell built with placeholder data: `Header`, `Footer`, `RestaurantCard`, and `ForumRow` components in `src/components/`; homepage (`src/app/page.js`) composes them with a hero section, featured restaurants, popular search pills, and recent forum discussions, all styled with Tailwind. ✅ Done
 - **Class 4** — Backend shell scaffolded: Node.js + Express (ES modules) with the folder structure above, `config/db.js` MongoDB connector, aggregated router in `routes/index.js` (mounted at `/api`, exposes `GET /api/health`), centralized `middleware/errorHandler.js`, permissive CORS + JSON body parsing, `.env` / `.env.example` (`PORT`, `MONGODB_URI`), and installed `express`, `mongoose`, `dotenv`, `cors`. No resources scaffolded yet. ✅ Done
 - **Class 4** — Restaurant resource built end-to-end: `models/restaurant.model.js` (schema with address, GeoJSON `location` + `2dsphere` index, dietary flags, features, ratings), `controllers/restaurant.controller.js` (async CRUD with try/catch → `next(err)`, `name`/`city` case-insensitive partial + `state`/`zip` exact query filters), `validators/restaurant.validator.js` (hand-rolled create/update middleware), `routes/restaurant.routes.js` (mounted at `/restaurants` from `routes/index.js` → full paths under `/api/restaurants`). Added `utils/seed.js` that wipes the collection and inserts 19 realistic sample restaurants across Austin, Portland, Denver, Chicago, NYC, and SF with varied dietary/features/type data. Verified: server boots, seed runs, `GET /api/restaurants` returns 19, `?city=austin` returns 4, full CRUD path returns correct status codes (201/200/204/400/404). ✅ Done
+- **Class 4** — Frontend ↔ backend wired up: added `src/lib/api.js` (centralized fetch client with `getRestaurants` / `getRestaurantById`, base URL from `NEXT_PUBLIC_API_URL`, throws on non-2xx). Created `frontend/.env.local` + `frontend/.env.example` with `NEXT_PUBLIC_API_URL`. Built `src/app/restaurants/page.js` — a client-side listing page that reads `name` / `city` / `state` / `zip` from the URL, fetches from the API on mount, and renders loading / empty / error / results states as a responsive grid of `RestaurantCard`s. Added a 4-field search form that pushes filters into the URL query string (which triggers a refetch via component-key remount). Updated `RestaurantCard` to accept a `restaurant` prop matching the backend shape (name, address, imageUrl, features) and render city/state + feature tags; updated homepage placeholder data accordingly. ✅ Done
 
 ## Known issues / open items
 
