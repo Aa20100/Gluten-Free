@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Show, SignInButton, UserButton } from "@clerk/nextjs";
 
 // href === null → not-yet-functional placeholder; renders as plain text.
 const navLinks = [
@@ -39,9 +40,28 @@ export default function Header() {
               </span>
             )
           )}
-          <span className="cursor-default rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-700">
-            Log in
-          </span>
+
+          {/* Auth-aware slots. Clerk's <Show when="..."> renders its children
+              only when the auth state matches — so the header swaps between a
+              Log-in button and the user avatar without any client-side
+              branching of our own. (In Core 3 this replaces the old
+              <SignedIn> / <SignedOut> components.) */}
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <button
+                type="button"
+                className="cursor-pointer rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-700"
+              >
+                Log in
+              </button>
+            </SignInButton>
+          </Show>
+          <Show when="signed-in">
+            <UserButton
+              afterSignOutUrl="/"
+              appearance={{ elements: { avatarBox: "h-9 w-9" } }}
+            />
+          </Show>
         </nav>
       </div>
     </header>
