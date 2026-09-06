@@ -9,14 +9,21 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 /**
- * Build a full URL from a path and an optional params object. Only entries
- * whose value is a non-empty string are included in the query string.
+ * Build a full URL from a path and an optional params object.
+ *
+ * - String / number values: included when non-empty.
+ * - Array values: joined with a comma; skipped when empty. Matches the
+ *   backend's csv query-param convention (e.g. `dietary=glutenFree,vegan`).
+ * - null / undefined / empty-string / empty-array: skipped.
  */
 function buildUrl(path, params) {
   const url = new URL(`${API_BASE_URL}${path}`);
   if (params) {
     for (const [key, value] of Object.entries(params)) {
-      if (value != null && String(value).trim() !== "") {
+      if (value == null) continue;
+      if (Array.isArray(value)) {
+        if (value.length > 0) url.searchParams.set(key, value.join(","));
+      } else if (String(value).trim() !== "") {
         url.searchParams.set(key, String(value).trim());
       }
     }
