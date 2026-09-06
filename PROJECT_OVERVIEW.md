@@ -79,6 +79,19 @@ backend/
 
 ## Data models
 
+### User (`backend/models/user.model.js`)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `clerkUserId` | String | **required**, **unique**, indexed. Clerk's stable user id — how a `req.auth.userId` maps to a row here. |
+| `email` | String | Snapshot from Clerk at creation. Not the source of truth. |
+| `name` | String | Snapshot from Clerk at creation. |
+| `favorites` | [ObjectId] | Refs to `Restaurant` docs. Enables `.populate("favorites")` later. Default `[]`. |
+| `createdAt` | Date | auto (via `timestamps`) |
+| `updatedAt` | Date | auto (via `timestamps`) |
+
+Users are **lazy-created** on first authenticated request via `backend/utils/getOrCreateUser.js`, which fetches email/name from Clerk on insert. See [Auth strategy](#auth-strategy).
+
 ### Restaurant (`backend/models/restaurant.model.js`)
 
 | Field | Type | Notes |
@@ -126,6 +139,12 @@ backend/
 
 All routes are mounted under `/api`.
 
+### Users
+
+| Method | Path | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/users/me` | required | Returns the DB `User` doc for the current Clerk session. Lazy-creates the row on the first hit via `getOrCreateUser` (snapshot email + name from Clerk). Responds `401` without a valid session. |
+
 ### Restaurants
 
 | Method | Path | Description |
@@ -171,7 +190,8 @@ Auth is handled by [Clerk](https://clerk.com/) on the frontend via `@clerk/nextj
 - **Route protection**: `frontend/middleware.js` uses `clerkMiddleware` + `createRouteMatcher` to gate write-side and personal routes. Currently protects `/profile(.*)`, `/favorites(.*)`, `/forum/new(.*)` (posting), and `/forum/(.*)/comment(.*)` (commenting). Browse-only routes (`/`, `/restaurants`, `/restaurants/[id]`, and future `/forum`, `/forum/[id]` reads) stay public. Signed-out users hitting a protected route are redirected to Clerk's sign-in flow, then bounced back.
 - **Header**: `src/components/Header.js` uses `<Show when="signed-out">` around `<SignInButton mode="modal">` (opens Clerk's sign-in modal in place) and `<Show when="signed-in">` around `<UserButton>` (avatar + menu with a Sign out link). Sign-out returns the user to `/`.
 - **Profile**: `src/app/profile/page.js` is a client component using `useUser()` to render the signed-in user's name and email. Middleware ensures the user is authenticated before the page loads.
-- **Backend**: `CLERK_SECRET_KEY` is already scaffolded in the env docs — the backend will use it once we wire up API-side auth (JWT verification, per-user data). Not yet integrated.
+- **Backend**: Uses `@clerk/express`. `server.js` registers `clerkMiddleware()` globally when both `CLERK_SECRET_KEY` and `CLERK_PUBLISHABLE_KEY` are set — this populates `req.auth` on every request from a session cookie or `Authorization: Bearer <token>` (without rejecting). Per-route protection lives in `backend/middleware/requireAuth.js`, which calls `getAuth(req)`, checks `userId`, and responds `401` (matching our error-envelope format) if the request isn't authenticated. Registration is skipped with a console warning when keys are missing so the public routes still work during setup — protected routes just 401 until the keys are pasted in.
+- **User lazy-creation**: `backend/utils/getOrCreateUser.js` maps Clerk's `userId` to a row in our `users` collection. Fast path is `findOne({ clerkUserId })`; on first sight, it fetches the Clerk user via `clerkClient.users.getUser`, snapshots the primary email + name, and upserts with `$setOnInsert` so two concurrent first-requests don't race into a duplicate-key error.
 
 ## Progress log
 
@@ -184,7 +204,8 @@ Auth is handled by [Clerk](https://clerk.com/) on the frontend via `@clerk/nextj
 - **Class 4** — Extended `GET /api/restaurants` with advanced filters. Added `restaurantType` (comma-separated, match ANY via `$in`), `dietary` and `features` (comma-separated, EVERY flag must be true — implemented by adding one `dietary.<flag>: true` / `features.<flag>: true` condition per token), and geospatial `lat` / `lng` / `radius` (defaults to 25 km, uses `$geoWithin` + `$centerSphere` on the 2dsphere-indexed `location` field). Filter object is built up step-by-step so any combination composes with AND semantics. Invalid or partial lat/lng returns `400`. Verified: `?dietary=glutenFree,vegan` → 8; `?features=dedicatedGfKitchen,separateFryer` → 3; `?lat=30.27&lng=-97.74&radius=10` → 4 Austin restaurants. ✅ Done
 - **Class 4** — Filter panel on `/restaurants`. Added a sticky sidebar (desktop) / slide-out drawer (mobile, via a "Filters" button) with three checkbox-group sections — Dietary (13 flags), Restaurant Features (7 flags), Restaurant Type (8 flags). Each checkbox toggles its category's csv URL query param, which the listing refetches on. **Gluten Free** defaults to checked when the URL has no `dietary` key, is rendered with an emerald "Core" badge and highlighted row, and is excluded from the active-filter count. Explicit `?dietary=` in the URL is respected as "user opted out of GF". "Clear all" resets everything to just `?dietary=glutenFree`. Active-filter count is displayed near the top. `src/lib/api.js` was updated to accept arrays for query-param values and auto-join them into csv strings. Escape key closes the mobile drawer. ✅ Done
 - **Class 4** — Geolocation + nearby search. Extracted the homepage's "Find Restaurants Near You" button into `src/components/NearbyButton.js` (client component). Click asks the browser for `navigator.geolocation`, navigates to `/restaurants?lat=&lng=&radius=25` on grant, and shows a friendly inline fallback (with a "Search by city" link) on denial, timeout, or an unsupported browser. Extended `/restaurants` to read `lat`/`lng`/`radius` from the URL and forward them to the API — this also fixed a latent bug where hand-crafted geo URLs were ignored. When both `lat` and `lng` are present, a small banner renders above the search bar: "📍 Showing restaurants within **N** km of your location — Change", where **N** comes from the URL's `radius` (defaulting to 25). "Change" clears just `lat`/`lng`/`radius` from the URL while leaving every other filter intact. Added 3 seed restaurants in the Plainsboro / Princeton, NJ area (Millstone Bakery, Nassau Street Kitchen, Ridge Road Cafe) so a local geolocation returns results. ✅ Done
-- **Class 7** — Clerk auth on the frontend. Installed `@clerk/nextjs` v7 (Core 3). Wrapped `<html>` in `<ClerkProvider>` inside `src/app/layout.js`. Added `frontend/middleware.js` using `clerkMiddleware` + `createRouteMatcher` to protect `/profile`, `/favorites`, and write-side forum routes (`/forum/new`, `/forum/<id>/comment`) while keeping browse routes public. Updated `Header` to swap between `<SignInButton mode="modal">` (opens Clerk's sign-in modal) and `<UserButton>` (avatar menu) via `<Show when="signed-out">` / `<Show when="signed-in">` — the Core 3 replacement for the removed `<SignedIn>` / `<SignedOut>` components. Added `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` to `frontend/.env.local` (empty) and `frontend/.env.example`. Created `src/app/profile/page.js` — a client component using `useUser()` to display the signed-in user's name and email; middleware guarantees the user is authenticated by the time the page renders. Backend auth wiring (JWT verification, per-user data) is deferred to a later class. ✅ Done
+- **Class 7** — Clerk auth on the frontend. Installed `@clerk/nextjs` v7 (Core 3). Wrapped `<html>` in `<ClerkProvider>` inside `src/app/layout.js`. Added `frontend/middleware.js` using `clerkMiddleware` + `createRouteMatcher` to protect `/profile`, `/favorites`, and write-side forum routes (`/forum/new`, `/forum/<id>/comment`) while keeping browse routes public. Updated `Header` to swap between `<SignInButton mode="modal">` (opens Clerk's sign-in modal) and `<UserButton>` (avatar menu) via `<Show when="signed-out">` / `<Show when="signed-in">` — the Core 3 replacement for the removed `<SignedIn>` / `<SignedOut>` components. Added `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` to `frontend/.env.local` (empty) and `frontend/.env.example`. Created `src/app/profile/page.js` — a client component using `useUser()` to display the signed-in user's name and email; middleware guarantees the user is authenticated by the time the page renders. ✅ Done
+- **Class 7** — Clerk verification on the backend. Installed `@clerk/express`. Added `CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` to `backend/.env` and `.env.example` (both required by `clerkMiddleware()`). `server.js` conditionally registers `clerkMiddleware()` when both keys are present — public routes stay reachable during setup. Added `backend/middleware/requireAuth.js` — reads `getAuth(req)`, attaches `req.auth`, and returns 401 with our standard error envelope on missing session (also swallows the `getAuth`-without-middleware throw). Added `models/user.model.js` (clerkUserId unique+indexed, email, name, favorites → Restaurant refs, timestamps). Added `utils/getOrCreateUser.js` — lazy-creates the DB user on first authed request via `clerkClient.users.getUser` + `$setOnInsert` upsert (race-safe). Added `controllers/user.controller.js` (`getMe`) and `routes/user.routes.js` (`GET /me` → requireAuth → getMe), mounted at `/api/users`. Verified: `GET /api/users/me` returns 401 without a session; public routes (`/api/health`, `/api/restaurants`) still 200. Positive-path verification (200 + user doc from a real session) requires the user's Clerk keys pasted into `backend/.env`. ✅ Done
 
 ## Known issues / open items
 
