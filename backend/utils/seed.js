@@ -408,6 +408,93 @@ const SAMPLE_RESTAURANTS = [
     averageRating: 4.5,
     reviewCount: 401,
   },
+
+  // ── Plainsboro / Princeton, NJ ─────────────────────────────────────────
+  {
+    name: "Millstone Bakery",
+    description:
+      "Dedicated gluten-free bakery in Plainsboro Village Center — challah, bagels, and layered cakes, plus a small brunch menu on weekends.",
+    address: {
+      street: "10 Schalks Crossing Rd",
+      city: "Plainsboro",
+      state: "NJ",
+      zip: "08536",
+      country: "USA",
+    },
+    location: { type: "Point", coordinates: [-74.5871, 40.3323] },
+    phone: "(609) 555-0142",
+    website: "https://example.com/millstone-bakery",
+    cuisine: ["Bakery", "American"],
+    restaurantType: ["breakfast", "bakery", "coffee_shop"],
+    dietary: { glutenFree: true, dairyFree: true, vegetarian: true, nutFree: true },
+    features: {
+      dedicatedGfKitchen: true,
+      gfMenu: true,
+      gfDesserts: true,
+      certifiedGlutenFree: true,
+      staffTrainedForCeliac: true,
+      crossContaminationPrecautions: true,
+    },
+    averageRating: 4.7,
+    reviewCount: 184,
+  },
+  {
+    name: "Nassau Street Kitchen",
+    description:
+      "Modern American restaurant a few blocks off the Princeton campus with a clearly marked GF menu and a dedicated fryer.",
+    address: {
+      street: "182 Nassau St",
+      city: "Princeton",
+      state: "NJ",
+      zip: "08542",
+      country: "USA",
+    },
+    location: { type: "Point", coordinates: [-74.6672, 40.3573] },
+    phone: "(609) 555-0163",
+    cuisine: ["American", "Farm-to-Table"],
+    restaurantType: ["lunch", "dinner", "fine_dining"],
+    dietary: { glutenFree: true, dairyFree: true, vegetarian: true, vegan: true },
+    features: {
+      separateFryer: true,
+      gfMenu: true,
+      gfDesserts: true,
+      staffTrainedForCeliac: true,
+      crossContaminationPrecautions: true,
+    },
+    averageRating: 4.6,
+    reviewCount: 267,
+  },
+  {
+    name: "Ridge Road Cafe",
+    description:
+      "West Windsor breakfast and brunch spot with an all-day GF pancake, waffle, and eggs-benedict menu. Kid-friendly, right by Princeton Junction station.",
+    address: {
+      street: "451 Ridge Rd",
+      city: "West Windsor",
+      state: "NJ",
+      zip: "08550",
+      country: "USA",
+    },
+    location: { type: "Point", coordinates: [-74.6207, 40.3168] },
+    phone: "(609) 555-0189",
+    cuisine: ["American", "Breakfast"],
+    restaurantType: ["breakfast", "lunch"],
+    dietary: {
+      glutenFree: true,
+      dairyFree: true,
+      eggFree: false,
+      nutFree: true,
+      vegetarian: true,
+    },
+    features: {
+      separateFryer: true,
+      gfMenu: true,
+      staffTrainedForCeliac: true,
+      crossContaminationPrecautions: true,
+    },
+    averageRating: 4.5,
+    reviewCount: 221,
+  },
 ];
 
 async function main() {
