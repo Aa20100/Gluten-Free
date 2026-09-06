@@ -85,3 +85,36 @@ export function getRestaurants(params) {
 export function getRestaurantById(id) {
   return request(buildUrl(`/restaurants/${encodeURIComponent(id)}`));
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// Authenticated requests
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Build the Authorization header for a backend request from a Clerk token.
+ *
+ * `getToken` is Clerk's `useAuth().getToken` — a function that returns a
+ * fresh session JWT (or `null` if the user is signed out). We accept it as
+ * an argument rather than importing Clerk here so api.js stays framework-
+ * agnostic and callable from anywhere. Callers grab `getToken` in a client
+ * component via `const { getToken } = useAuth()` and pass it in.
+ *
+ * Returns `{}` (no header) if no token is available so the backend can
+ * respond with a clean 401 rather than a malformed request.
+ */
+export async function getAuthHeaders(getToken) {
+  if (typeof getToken !== "function") return {};
+  const token = await getToken();
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
+}
+
+/**
+ * GET /api/users/me — returns the DB User record for the current session.
+ * Backend lazy-creates the row on first hit.
+ * @param {() => Promise<string|null>} getToken from Clerk's useAuth()
+ */
+export async function getMe(getToken) {
+  const headers = await getAuthHeaders(getToken);
+  return request(buildUrl("/users/me"), { headers });
+}
