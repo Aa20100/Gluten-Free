@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RestaurantCard from "@/components/RestaurantCard";
 import ForumRow from "@/components/ForumRow";
+import NearbyButton from "@/components/NearbyButton";
 
 // Placeholder data shaped like the backend Restaurant model so RestaurantCard
 // can render it directly. Swap for a real fetch of featured restaurants later.
@@ -112,13 +113,7 @@ export default function Home() {
               </button>
             </form>
 
-            <button
-              type="button"
-              className="mt-1 inline-flex items-center gap-2 rounded-full border border-orange-300 bg-white px-5 py-2.5 text-sm font-semibold text-orange-700 transition-colors hover:bg-orange-50"
-            >
-              <span aria-hidden="true">📍</span>
-              Find Restaurants Near You
-            </button>
+            <NearbyButton />
           </div>
         </section>
 

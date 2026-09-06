@@ -18,6 +18,12 @@ const TEXT_KEYS = ["name", "city", "state", "zip"];
 /** csv-array query params. Each is a section in the filter panel. */
 const CATEGORY_KEYS = ["restaurantType", "dietary", "features"];
 
+/** Geospatial query params (set by the "Find Restaurants Near You" flow). */
+const GEO_KEYS = ["lat", "lng", "radius"];
+
+/** Default radius (km) used when displaying the geo banner without one. */
+const DEFAULT_GEO_RADIUS_KM = 25;
+
 /**
  * Core dietary flag: always defaults to checked, visually emphasized, and
  * excluded from the "active filters" count so the count reflects how many
@@ -74,7 +80,7 @@ const FEATURE_OPTIONS = [
  * respect the user's explicit selection — that lets them turn GF off.
  */
 function readFilters(searchParams) {
-  const filters = { text: {}, categories: {} };
+  const filters = { text: {}, categories: {}, geo: {} };
 
   for (const key of TEXT_KEYS) {
     const v = searchParams.get(key);
@@ -94,12 +100,17 @@ function readFilters(searchParams) {
     }
   }
 
+  for (const key of GEO_KEYS) {
+    const v = searchParams.get(key);
+    if (v) filters.geo[key] = v;
+  }
+
   return filters;
 }
 
 /** Convert filter state into the params object the API client expects. */
 function apiParamsFrom(filters) {
-  const out = { ...filters.text };
+  const out = { ...filters.text, ...filters.geo };
   for (const key of CATEGORY_KEYS) {
     if (filters.categories[key].length > 0) {
       out[key] = filters.categories[key]; // api.js joins arrays with ","
@@ -393,6 +404,17 @@ function RestaurantsListing() {
     setDrawerOpen(false);
   };
 
+  /**
+   * Drop lat/lng/radius from the URL but keep every other filter (dietary,
+   * features, text search, etc.) intact. Used by the "Change" link on the
+   * geolocation banner.
+   */
+  const handleClearGeo = () => {
+    pushParams((next) => {
+      for (const key of GEO_KEYS) next.delete(key);
+    });
+  };
+
   const handleTextSubmit = (values) => {
     pushParams((next) => {
       for (const key of TEXT_KEYS) {
@@ -413,6 +435,13 @@ function RestaurantsListing() {
           Search celiac-safe and allergen-friendly restaurants.
         </p>
       </div>
+
+      {filters.geo.lat && filters.geo.lng && (
+        <GeoBanner
+          radius={filters.geo.radius}
+          onChange={handleClearGeo}
+        />
+      )}
 
       <SearchBar
         key={`form-${searchKey}`}
@@ -517,6 +546,27 @@ function RestaurantsListing() {
 // ────────────────────────────────────────────────────────────────────────────
 // Fallback / status components
 // ────────────────────────────────────────────────────────────────────────────
+
+function GeoBanner({ radius, onChange }) {
+  // Show whatever radius is in the URL; fall back to the app default so
+  // the banner still reads sensibly if radius was dropped somehow.
+  const km = Number(radius) || DEFAULT_GEO_RADIUS_KM;
+  return (
+    <div className="mb-4 flex flex-col items-start justify-between gap-2 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-stone-800 sm:flex-row sm:items-center">
+      <p>
+        <span aria-hidden="true">📍</span> Showing restaurants within{" "}
+        <span className="font-semibold">{km} km</span> of your location
+      </p>
+      <button
+        type="button"
+        onClick={onChange}
+        className="font-semibold text-orange-700 underline-offset-2 hover:underline"
+      >
+        Change
+      </button>
+    </div>
+  );
+}
 
 function LoadingGrid() {
   return (
