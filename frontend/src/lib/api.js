@@ -53,7 +53,11 @@ async function request(url, init) {
     const msg = `Request to ${url} failed with ${res.status} ${res.statusText}${
       details ? `: ${details}` : ""
     }`;
-    throw new Error(msg);
+    const err = new Error(msg);
+    // Attach the status so callers can branch on 404 vs. other failures
+    // without string-matching the message.
+    err.status = res.status;
+    throw err;
   }
 
   return res.json();

@@ -129,11 +129,25 @@ All routes are mounted under `/api`.
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/api/restaurants` | List restaurants. Optional query params: `name`, `city` (case-insensitive partial match); `state`, `zip` (exact match). |
+| `GET` | `/api/restaurants` | List restaurants. See query params below. |
 | `GET` | `/api/restaurants/:id` | Fetch one restaurant by id. |
 | `POST` | `/api/restaurants` | Create a restaurant. Body validated (required: `name`). Returns `201` + created doc. |
 | `PUT` | `/api/restaurants/:id` | Update a restaurant. Body validated. Returns updated doc. |
 | `DELETE` | `/api/restaurants/:id` | Delete a restaurant. Returns `204`. |
+
+**`GET /api/restaurants` query params** — all optional, all combinable (AND):
+
+| Param | Type | Behavior |
+| --- | --- | --- |
+| `name` | string | Case-insensitive partial match on `name`. |
+| `city` | string | Case-insensitive partial match on `address.city`. |
+| `state` | string | Exact match on `address.state`. |
+| `zip` | string | Exact match on `address.zip`. |
+| `restaurantType` | csv | Comma-separated list of types. Matches ANY (`$in`). Example: `?restaurantType=bakery,coffee_shop`. |
+| `dietary` | csv | Comma-separated dietary flags. EVERY listed flag must be `true`. Example: `?dietary=glutenFree,vegan`. |
+| `features` | csv | Comma-separated feature flags. EVERY listed flag must be `true`. Example: `?features=dedicatedGfKitchen,separateFryer`. |
+| `lat`, `lng` | number | Center point for the geo filter. Longitude / latitude in decimal degrees. Both required together — passing one without the other, or a non-numeric value, returns `400`. |
+| `radius` | number | Search radius in km for the geo filter. Defaults to `25` when `lat` / `lng` are supplied without it. Uses `$geoWithin` + `$centerSphere` against the 2dsphere-indexed `location` field. |
 
 ## Environment variables
 
@@ -157,6 +171,8 @@ Auth will be handled with [Clerk](https://clerk.com/). This is planned for a lat
 - **Class 4** — Backend shell scaffolded: Node.js + Express (ES modules) with the folder structure above, `config/db.js` MongoDB connector, aggregated router in `routes/index.js` (mounted at `/api`, exposes `GET /api/health`), centralized `middleware/errorHandler.js`, permissive CORS + JSON body parsing, `.env` / `.env.example` (`PORT`, `MONGODB_URI`), and installed `express`, `mongoose`, `dotenv`, `cors`. No resources scaffolded yet. ✅ Done
 - **Class 4** — Restaurant resource built end-to-end: `models/restaurant.model.js` (schema with address, GeoJSON `location` + `2dsphere` index, dietary flags, features, ratings), `controllers/restaurant.controller.js` (async CRUD with try/catch → `next(err)`, `name`/`city` case-insensitive partial + `state`/`zip` exact query filters), `validators/restaurant.validator.js` (hand-rolled create/update middleware), `routes/restaurant.routes.js` (mounted at `/restaurants` from `routes/index.js` → full paths under `/api/restaurants`). Added `utils/seed.js` that wipes the collection and inserts 19 realistic sample restaurants across Austin, Portland, Denver, Chicago, NYC, and SF with varied dietary/features/type data. Verified: server boots, seed runs, `GET /api/restaurants` returns 19, `?city=austin` returns 4, full CRUD path returns correct status codes (201/200/204/400/404). ✅ Done
 - **Class 4** — Frontend ↔ backend wired up: added `src/lib/api.js` (centralized fetch client with `getRestaurants` / `getRestaurantById`, base URL from `NEXT_PUBLIC_API_URL`, throws on non-2xx). Created `frontend/.env.local` + `frontend/.env.example` with `NEXT_PUBLIC_API_URL`. Built `src/app/restaurants/page.js` — a client-side listing page that reads `name` / `city` / `state` / `zip` from the URL, fetches from the API on mount, and renders loading / empty / error / results states as a responsive grid of `RestaurantCard`s. Added a 4-field search form that pushes filters into the URL query string (which triggers a refetch via component-key remount). Updated `RestaurantCard` to accept a `restaurant` prop matching the backend shape (name, address, imageUrl, features) and render city/state + feature tags; updated homepage placeholder data accordingly. ✅ Done
+- **Class 4** — Restaurant detail page + navigation wiring. Added `src/app/restaurants/[id]/page.js` (server component) that fetches via `getRestaurantById(id)` and renders the full restaurant: hero image, name, city/state, rating, About, Celiac-Safety Features, Dietary Options, Contact (phone, website), Address (with Google Maps link built from `location.coordinates` when available). Added `src/app/restaurants/[id]/not-found.js` for the friendly 404 UI; enhanced `api.js` to attach `err.status` so the page can distinguish 400/404 from other failures and call `notFound()`. Wired the header's Restaurants link, the homepage hero search (plain GET form → `/restaurants?name=…`), the Popular Searches pills (`<Link>`s to `/restaurants?name=…`), and `RestaurantCard` (whole card is a `<Link>` to `/restaurants/[id]`). ✅ Done
+- **Class 4** — Extended `GET /api/restaurants` with advanced filters. Added `restaurantType` (comma-separated, match ANY via `$in`), `dietary` and `features` (comma-separated, EVERY flag must be true — implemented by adding one `dietary.<flag>: true` / `features.<flag>: true` condition per token), and geospatial `lat` / `lng` / `radius` (defaults to 25 km, uses `$geoWithin` + `$centerSphere` on the 2dsphere-indexed `location` field). Filter object is built up step-by-step so any combination composes with AND semantics. Invalid or partial lat/lng returns `400`. Verified: `?dietary=glutenFree,vegan` → 8; `?features=dedicatedGfKitchen,separateFryer` → 3; `?lat=30.27&lng=-97.74&radius=10` → 4 Austin restaurants. ✅ Done
 
 ## Known issues / open items
 
