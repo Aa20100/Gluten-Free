@@ -359,12 +359,16 @@ function RestaurantsListing() {
     return () => window.removeEventListener("keydown", onKey);
   }, [drawerOpen]);
 
-  /** Build a new URLSearchParams from the current one, then push it. */
+  /**
+   * Build a new URLSearchParams from the current one, then push it.
+   * `scroll: false` keeps the viewport where the user was — otherwise
+   * every filter toggle would snap the page back to the top.
+   */
   const pushParams = (updater) => {
     const next = new URLSearchParams(searchParams);
     updater(next);
     const qs = next.toString();
-    router.push(qs ? `/restaurants?${qs}` : "/restaurants");
+    router.push(qs ? `/restaurants?${qs}` : "/restaurants", { scroll: false });
   };
 
   const handleToggle = (category, value, checked) => {
@@ -385,7 +389,7 @@ function RestaurantsListing() {
 
   const handleClearAll = () => {
     // Clear everything, then re-check the core dietary flag.
-    router.push(`/restaurants?dietary=${CORE_DIETARY_FLAG}`);
+    router.push(`/restaurants?dietary=${CORE_DIETARY_FLAG}`, { scroll: false });
     setDrawerOpen(false);
   };
 
