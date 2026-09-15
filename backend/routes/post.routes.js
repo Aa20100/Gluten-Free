@@ -13,6 +13,8 @@ import {
   validateUpdatePost,
 } from "../validators/post.validator.js";
 import { requireAuth } from "../middleware/requireAuth.js";
+import { imagesUpload } from "../middleware/upload.js";
+import { normalizePostBody } from "../middleware/normalizePostBody.js";
 
 const router = Router();
 
@@ -23,8 +25,28 @@ router.get("/", getPosts);
 router.get("/me", requireAuth, getMyPosts);
 
 router.get("/:id", getPostById);
-router.post("/", requireAuth, validateCreatePost, createPost);
-router.put("/:id", requireAuth, validateUpdatePost, updatePost);
+
+// Create + update accept EITHER JSON or multipart/form-data. When multipart,
+// multer parses files into req.files and non-file fields into req.body as
+// strings; normalizePostBody then coerces `tags` (csv) and `imageUrls` (JSON)
+// back to arrays before the validator inspects the payload.
+router.post(
+  "/",
+  requireAuth,
+  imagesUpload,
+  normalizePostBody,
+  validateCreatePost,
+  createPost
+);
+router.put(
+  "/:id",
+  requireAuth,
+  imagesUpload,
+  normalizePostBody,
+  validateUpdatePost,
+  updatePost
+);
+
 router.delete("/:id", requireAuth, deletePost);
 
 export default router;

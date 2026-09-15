@@ -34,7 +34,7 @@ export default function NewPostPage() {
   const [category, setCategory] = useState("");
   const [tagsRaw, setTagsRaw] = useState("");
   const [body, setBody] = useState("");
-  const [imageUrls, setImageUrls] = useState([]);
+  const [files, setFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -56,7 +56,7 @@ export default function NewPostPage() {
           body: body.trim(),
           category,
           tags: parseTags(tagsRaw),
-          imageUrls,
+          files, // uploaded to Cloudinary by the backend
         },
         getToken
       );
@@ -138,8 +138,8 @@ export default function NewPostPage() {
               />
             </Field>
 
-            <Field label="Images" hint="Optional. Uploaded to Cloudinary.">
-              <CloudinaryUploader imageUrls={imageUrls} onChange={setImageUrls} />
+            <Field label="Images" hint="Optional. Uploaded when you post.">
+              <CloudinaryUploader files={files} onChange={setFiles} />
             </Field>
 
             {error && (

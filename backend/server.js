@@ -4,6 +4,9 @@ import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 
 import { connectDB } from "./config/db.js";
+// Importing initializes the Cloudinary SDK once from env vars, and logs
+// a warning early if CLOUDINARY_* keys are missing.
+import "./config/cloudinary.js";
 import apiRouter from "./routes/index.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 

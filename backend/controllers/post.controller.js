@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 import Post from "../models/post.model.js";
 import { getOrCreateUser } from "../utils/getOrCreateUser.js";
+import { uploadFilesToCloudinary } from "../utils/uploadToCloudinary.js";
 
 // ── Small helpers ──────────────────────────────────────────────────────
 
@@ -129,18 +130,29 @@ export async function getPostById(req, res, next) {
   }
 }
 
-/** POST /api/posts — protected */
+/**
+ * POST /api/posts — protected. Accepts either JSON or multipart/form-data.
+ *
+ * When multipart, image files arrive on req.files (as multer buffers) and
+ * we upload them to Cloudinary here. Any `imageUrls` on the body are
+ * treated as already-hosted URLs (rare on create, common on future
+ * "share this image" flows) and get merged with the freshly-uploaded
+ * ones — files first, so ordering in the UI is predictable.
+ */
 export async function createPost(req, res, next) {
   try {
     const user = await getOrCreateUser(req.auth.userId);
     const { title, body, category, tags = [], imageUrls = [] } = req.body;
+
+    const uploadedUrls = await uploadFilesToCloudinary(req.files);
+    const finalImageUrls = [...uploadedUrls, ...imageUrls];
 
     const created = await Post.create({
       title,
       body,
       category,
       tags,
-      imageUrls,
+      imageUrls: finalImageUrls,
       author: user._id,
     });
 
@@ -168,8 +180,21 @@ export async function updatePost(req, res, next) {
     // Apply only fields that were sent. Vote/mod fields (upvotes, downvotes,
     // isPinned, isLocked, reportCount) aren't editable via this endpoint —
     // they'll get their own routes later.
-    for (const key of ["title", "body", "category", "tags", "imageUrls"]) {
+    for (const key of ["title", "body", "category", "tags"]) {
       if (key in req.body) post[key] = req.body[key];
+    }
+
+    // Image handling on update:
+    //   - If new files were uploaded, push their Cloudinary URLs.
+    //   - If the client sent `imageUrls`, treat it as the set they want to
+    //     KEEP (they may have removed some client-side). New uploads
+    //     append to that kept set.
+    //   - If neither is present, leave the existing imageUrls alone.
+    const uploadedUrls = await uploadFilesToCloudinary(req.files);
+    const clientSentImageUrls = "imageUrls" in req.body;
+    if (clientSentImageUrls || uploadedUrls.length > 0) {
+      const kept = clientSentImageUrls ? req.body.imageUrls : post.imageUrls;
+      post.imageUrls = [...(kept || []), ...uploadedUrls];
     }
 
     await post.save();

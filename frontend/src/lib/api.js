@@ -221,31 +221,100 @@ export function getPostById(id) {
 }
 
 /**
- * POST /api/posts — authed. Signature is `(payload, getToken)` to match the
- * spec for this feature; note the earlier reviews wrappers use the reverse
- * order (`getToken` first).
+ * Turn a post payload into a multipart FormData body the backend can
+ * parse with multer. File objects go under `images`; simple scalars go
+ * raw; `tags` is joined into a csv (backend re-splits); `imageUrls`
+ * (URLs kept from a previous edit) is JSON-stringified.
+ *
+ * Non-file fields must all be strings on FormData — the browser rejects
+ * arrays / objects otherwise. The backend's normalizePostBody
+ * middleware un-stringifies these before validation.
+ */
+function postToFormData({ title, body, category, tags, imageUrls, files }) {
+  const form = new FormData();
+  if (title !== undefined) form.append("title", title);
+  if (body !== undefined) form.append("body", body);
+  if (category !== undefined) form.append("category", category);
+  if (Array.isArray(tags)) form.append("tags", tags.join(","));
+  if (Array.isArray(imageUrls)) form.append("imageUrls", JSON.stringify(imageUrls));
+  for (const file of files || []) form.append("images", file, file.name);
+  return form;
+}
+
+/**
+ * Fetch that lets FormData set its own Content-Type (with the required
+ * multipart boundary) instead of forcing JSON headers.
+ */
+async function requestForm(url, { method, headers, body }) {
+  let res;
+  try {
+    res = await fetch(url, { method, headers, body });
+  } catch (err) {
+    throw new Error(`Network error contacting ${url}: ${err.message}`);
+  }
+  if (!res.ok) {
+    let details = "";
+    try {
+      const j = await res.json();
+      details = j?.error?.message || j?.message || JSON.stringify(j);
+    } catch {
+      try { details = await res.text(); } catch {}
+    }
+    const err = new Error(
+      `Request to ${url} failed with ${res.status} ${res.statusText}${details ? `: ${details}` : ""}`
+    );
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+/**
+ * POST /api/posts — authed. Payload may include `files: File[]`; when
+ * present, the request is sent as multipart/form-data. Otherwise it goes
+ * as JSON.
+ *
+ * Signature is `(payload, getToken)` to match the Class 9 spec; note the
+ * earlier reviews wrappers use the reverse order (`getToken` first).
  */
 export async function createPost(payload, getToken) {
-  const headers = {
-    ...(await getAuthHeaders(getToken)),
-    "Content-Type": "application/json",
-  };
+  const hasFiles = Array.isArray(payload.files) && payload.files.length > 0;
+  const authHeaders = await getAuthHeaders(getToken);
+
+  if (hasFiles) {
+    // Do NOT set Content-Type — the browser fills in the multipart
+    // boundary automatically. Pre-setting it here would break parsing.
+    return requestForm(buildUrl("/posts"), {
+      method: "POST",
+      headers: authHeaders,
+      body: postToFormData(payload),
+    });
+  }
+
   return request(buildUrl("/posts"), {
     method: "POST",
-    headers,
+    headers: { ...authHeaders, "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 }
 
-/** PUT /api/posts/:id — authed. Partial update. */
+/** PUT /api/posts/:id — authed. Partial update. Same JSON-or-multipart rule. */
 export async function updatePost(id, payload, getToken) {
-  const headers = {
-    ...(await getAuthHeaders(getToken)),
-    "Content-Type": "application/json",
-  };
-  return request(buildUrl(`/posts/${encodeURIComponent(id)}`), {
+  const hasFiles = Array.isArray(payload.files) && payload.files.length > 0;
+  const authHeaders = await getAuthHeaders(getToken);
+  const url = buildUrl(`/posts/${encodeURIComponent(id)}`);
+
+  if (hasFiles) {
+    return requestForm(url, {
+      method: "PUT",
+      headers: authHeaders,
+      body: postToFormData(payload),
+    });
+  }
+
+  return request(url, {
     method: "PUT",
-    headers,
+    headers: { ...authHeaders, "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 }
