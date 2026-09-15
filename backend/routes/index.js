@@ -3,6 +3,7 @@ import { Router } from "express";
 import restaurantRoutes from "./restaurant.routes.js";
 import userRoutes from "./user.routes.js";
 import reviewRoutes from "./review.routes.js";
+import postRoutes from "./post.routes.js";
 
 const router = Router();
 
@@ -15,5 +16,6 @@ router.get("/health", (_req, res) => {
 router.use("/restaurants", restaurantRoutes);
 router.use("/users", userRoutes);
 router.use("/reviews", reviewRoutes);
+router.use("/posts", postRoutes);
 
 export default router;

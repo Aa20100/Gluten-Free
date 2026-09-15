@@ -93,6 +93,27 @@ backend/
 
 Users are **lazy-created** on first authenticated request via `backend/utils/getOrCreateUser.js`, which fetches email/name from Clerk on insert. See [Auth strategy](#auth-strategy).
 
+### Post (`backend/models/post.model.js`)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `title` | String | **required**, trimmed |
+| `body` | String | **required** |
+| `author` | ObjectId | **required**, indexed. Ref to `User`. |
+| `category` | String | **required**, enum — see [Domain notes: Forum categories](#domain-notes) |
+| `tags` | [String] | default `[]` |
+| `imageUrls` | [String] | default `[]` |
+| `upvotes` | [ObjectId] | Refs to `User`. `$addToSet` semantics — one vote per user. |
+| `downvotes` | [ObjectId] | Refs to `User`. Same dedupe rule as `upvotes`. |
+| `isPinned` | Boolean | default `false`. Pinned posts always appear first in `GET /posts`, regardless of sort. |
+| `isLocked` | Boolean | default `false` (reserved for locking discussion). |
+| `reportCount` | Number | default `0` (reserved for moderation). |
+| `createdAt` | Date | auto (via `timestamps`) |
+| `updatedAt` | Date | auto (via `timestamps`) |
+| `score` | Number (**virtual**) | `upvotes.length - downvotes.length`. `toJSON` / `toObject` include virtuals, so responses always carry it. |
+
+**Indexes**: compound `{ category: 1, createdAt: -1 }` for filtered listings and `{ createdAt: -1 }` for the default recent-first feed.
+
 ### Review (`backend/models/review.model.js`)
 
 | Field | Type | Notes |
@@ -172,6 +193,28 @@ All routes are mounted under `/api`.
 | `PUT` | `/api/reviews/:id` | required | Ownership-checked (`403` if the review isn't yours). Body may contain `rating` and/or `text` (partial update). Recomputes the restaurant's aggregate after saving. Returns the updated review populated. |
 | `DELETE` | `/api/reviews/:id` | required | Ownership-checked (`403` if not yours). Recomputes the restaurant's aggregate after deletion. Returns `204`. |
 
+### Forum / Posts
+
+| Method | Path | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/posts` | public | Paginated feed. See query params below. Response: `{ posts, total, page, limit, pageCount }`; each post is populated with `author.name` and carries the virtual `score`. Pinned posts always come first regardless of `sort`. |
+| `GET` | `/api/posts/me` | required | Returns the current user's posts, newest first (mounted before `/:id` in the router so the segment doesn't get eaten by the param). |
+| `GET` | `/api/posts/:id` | public | One post, populated with `author.name`. `400` on malformed id, `404` if missing. |
+| `POST` | `/api/posts` | required | Body: `{ title, body, category, tags?, imageUrls? }`. Validated. Returns `201` + created doc populated. |
+| `PUT` | `/api/posts/:id` | required | Author-only (`403` otherwise). Partial update over `title / body / category / tags / imageUrls`. Vote / moderation fields are NOT editable here. |
+| `DELETE` | `/api/posts/:id` | required | Author-only for now (`403` otherwise; moderator role TBD). Returns `204`. |
+
+**`GET /api/posts` query params** — all optional, combinable:
+
+| Param | Type | Behavior |
+| --- | --- | --- |
+| `category` | string | Exact match on the post's category (from the enum). |
+| `tag` | string | Exact match — post must contain this tag. |
+| `q` | string | Case-insensitive substring on `title` OR `body`. |
+| `sort` | `"recent"` (default) or `"popular"` | `recent` = createdAt desc; `popular` = score desc, then createdAt desc. Pinned posts are always prepended. |
+| `page` | number | 1-based. Defaults to `1`. |
+| `limit` | number | Defaults to `20`, capped at `100`. |
+
 ### Restaurants
 
 | Method | Path | Description |
@@ -220,6 +263,26 @@ Auth is handled by [Clerk](https://clerk.com/) on the frontend via `@clerk/nextj
 - **Backend**: Uses `@clerk/express`. `server.js` registers `clerkMiddleware()` globally when both `CLERK_SECRET_KEY` and `CLERK_PUBLISHABLE_KEY` are set — this populates `req.auth` on every request from a session cookie or `Authorization: Bearer <token>` (without rejecting). Per-route protection lives in `backend/middleware/requireAuth.js`, which calls `getAuth(req)`, checks `userId`, and responds `401` (matching our error-envelope format) if the request isn't authenticated. Registration is skipped with a console warning when keys are missing so the public routes still work during setup — protected routes just 401 until the keys are pasted in.
 - **User lazy-creation**: `backend/utils/getOrCreateUser.js` maps Clerk's `userId` to a row in our `users` collection. Fast path is `findOne({ clerkUserId })`; on first sight, it fetches the Clerk user via `clerkClient.users.getUser`, snapshots the primary email + name, and upserts with `$setOnInsert` so two concurrent first-requests don't race into a duplicate-key error.
 
+## Domain notes
+
+### Forum categories
+
+Values for `Post.category` (enforced by the model's enum; exported as `POST_CATEGORIES` from `backend/models/post.model.js` so validators and controllers can reuse the list):
+
+- `newly_diagnosed` — new-to-celiac / new-to-GF questions and onboarding
+- `restaurant_recommendations` — "where do you eat in <city>?"
+- `travel_tips` — flights, road trips, hotels, packing snacks
+- `recipes` — home cooking, substitutions, techniques
+- `grocery_finds` — new products spotted at the store, brand comparisons
+- `dining_questions` — how to order out safely, scripts, red flags
+- `cross_contamination_advice` — kitchens, shared equipment, prep protocols
+- `product_recommendations` — flour, pasta, bread, snack picks
+- `general_discussion` — everything else
+
+### Restaurant types
+
+Values for `Restaurant.restaurantType` (enforced by the model's enum; exported as `RESTAURANT_TYPES` from `backend/models/restaurant.model.js`): `breakfast`, `lunch`, `dinner`, `bakery`, `coffee_shop`, `fast_food`, `dessert`, `fine_dining`.
+
 ## Progress log
 
 - **Class 3** — Monorepo scaffolded: created `frontend/` (Next.js, App Router, JavaScript, Tailwind CSS, ESLint, `src/` directory) and empty `backend/` folder; added root `README.md` and `PROJECT_OVERVIEW.md`. ✅ Done
@@ -232,6 +295,7 @@ Auth is handled by [Clerk](https://clerk.com/) on the frontend via `@clerk/nextj
 - **Class 4** — Filter panel on `/restaurants`. Added a sticky sidebar (desktop) / slide-out drawer (mobile, via a "Filters" button) with three checkbox-group sections — Dietary (13 flags), Restaurant Features (7 flags), Restaurant Type (8 flags). Each checkbox toggles its category's csv URL query param, which the listing refetches on. **Gluten Free** defaults to checked when the URL has no `dietary` key, is rendered with an emerald "Core" badge and highlighted row, and is excluded from the active-filter count. Explicit `?dietary=` in the URL is respected as "user opted out of GF". "Clear all" resets everything to just `?dietary=glutenFree`. Active-filter count is displayed near the top. `src/lib/api.js` was updated to accept arrays for query-param values and auto-join them into csv strings. Escape key closes the mobile drawer. ✅ Done
 - **Class 4** — Geolocation + nearby search. Extracted the homepage's "Find Restaurants Near You" button into `src/components/NearbyButton.js` (client component). Click asks the browser for `navigator.geolocation`, navigates to `/restaurants?lat=&lng=&radius=25` on grant, and shows a friendly inline fallback (with a "Search by city" link) on denial, timeout, or an unsupported browser. Extended `/restaurants` to read `lat`/`lng`/`radius` from the URL and forward them to the API — this also fixed a latent bug where hand-crafted geo URLs were ignored. When both `lat` and `lng` are present, a small banner renders above the search bar: "📍 Showing restaurants within **N** km of your location — Change", where **N** comes from the URL's `radius` (defaulting to 25). "Change" clears just `lat`/`lng`/`radius` from the URL while leaving every other filter intact. Added 3 seed restaurants in the Plainsboro / Princeton, NJ area (Millstone Bakery, Nassau Street Kitchen, Ridge Road Cafe) so a local geolocation returns results. ✅ Done
 - **Class 7** — Clerk auth on the frontend. Installed `@clerk/nextjs` v7 (Core 3). Wrapped `<html>` in `<ClerkProvider>` inside `src/app/layout.js`. Added `frontend/middleware.js` using `clerkMiddleware` + `createRouteMatcher` to protect `/profile`, `/favorites`, and write-side forum routes (`/forum/new`, `/forum/<id>/comment`) while keeping browse routes public. Updated `Header` to swap between `<SignInButton mode="modal">` (opens Clerk's sign-in modal) and `<UserButton>` (avatar menu) via `<Show when="signed-out">` / `<Show when="signed-in">` — the Core 3 replacement for the removed `<SignedIn>` / `<SignedOut>` components. Added `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` to `frontend/.env.local` (empty) and `frontend/.env.example`. Created `src/app/profile/page.js` — a client component using `useUser()` to display the signed-in user's name and email; middleware guarantees the user is authenticated by the time the page renders. ✅ Done
+- **Class 9** — Forum Post resource on the backend. Added `models/post.model.js` (title, body, author→User, category enum with 9 values exported as `POST_CATEGORIES`, tags, imageUrls, upvotes/downvotes as User ref arrays for natural dedupe, isPinned, isLocked, reportCount, timestamps). Virtual `score = upvotes.length - downvotes.length` with `toJSON: { virtuals: true }` so responses always carry it. Indexes on `{ category: 1, createdAt: -1 }` and `{ createdAt: -1 }`. Hand-rolled `validators/post.validator.js`. `controllers/post.controller.js` implements the 6 handlers: `getPosts` (paginated, aggregation-based so sort-by-`score` for the `popular` mode works, always prepends `isPinned: -1` so pinned rows come first regardless of sort, response includes `total` + `pageCount`, `limit` capped at 100), `getPostById`, `createPost`, `updatePost` (author-only, partial update, vote/mod fields NOT editable via PUT), `deletePost` (author-only), `getMyPosts`. `routes/post.routes.js` mounts them; `/me` is registered before `/:id` so the segment isn't captured by the param. Mounted at `/api/posts` in `routes/index.js`. Verified via a 32-check DB-level e2e run (create/read/update/delete, ownership 403s, bad-id 400, missing 404, all filter combinations, pagination + limit cap, popular sort, and pinned-first under both sort modes) plus HTTP smoke tests confirming public listing works, protected routes return 401, and auth runs before validators. ✅ Done
 - **Class 8** — Favorites + Reviews on the frontend. Extended `src/lib/api.js` with authed wrappers for favorites (`getFavorites` / `addFavorite` / `removeFavorite`) and full reviews CRUD (`getReviewsForRestaurant` public; `getMyReviews` / `createReview` / `updateReview` / `deleteReview` authed) — all take Clerk's `getToken` as an argument. Added `src/components/StarRating.js` — one component that flips between read-only display and an interactive `radiogroup` when given `onChange`. Rebuilt `src/app/restaurants/[id]/page.js` as a client component: fetches restaurant + reviews on mount, fetches favorites + my-reviews when signed in, hero has a Save-to-favorites heart button (optimistic toggle; opens Clerk sign-in modal when signed out), reviews section shows a create form when the user hasn't reviewed yet or a prefilled edit form (with Delete) when they have, `getMe`-style loading skeleton, and inline 404 UI (replaced the old separate `not-found.js`). Rebuilt `/profile` with three parallel sections: Account (Clerk + DB combined), Your favorites (grid of `RestaurantCard`s + empty state linking back to `/restaurants`), and My reviews (list linking back to each restaurant for editing). Every card has its own loading skeleton, empty state, and error line. ✅ Done
 - **Class 8** — Favorites + Reviews on the backend. Extended `controllers/user.controller.js` with `getFavorites` / `addFavorite` (dedupes via `$addToSet`, 400 on bad id, 404 for missing restaurant) / `removeFavorite` (`$pull`), all returning the populated favorites list. Extended `routes/user.routes.js` with `GET /me/favorites`, `POST /me/favorites/:restaurantId`, `DELETE /me/favorites/:restaurantId` (all `requireAuth`); `getMe` now returns `favorites` populated too. Added `models/review.model.js` (user + restaurant refs, 1–5 rating, text, timestamps, unique compound `(user, restaurant)` index — duplicate reviews return 409), `validators/review.validator.js` (hand-rolled create/update: rating 1–5, non-empty text), and `controllers/review.controller.js` — CRUD with ownership checks (`403` when editing/deleting someone else's review) and a `getMyReviews` protected listing. Extracted the shared aggregate-recompute into `utils/recomputeRestaurantRating.js`, which runs one `$group` aggregation over the review collection and persists `averageRating` + `reviewCount` on the restaurant doc after every create / update / delete. Added `routes/review.routes.js` mounted at `/api/reviews`. Verified via a scripted end-to-end run against the DB (32 assertions covering favorites dedupe, ownership 403s, unique 409, and recompute math from 0 → 5 → 4 → 4.5 → 0). ✅ Done
 - **Class 7** — Clerk verification on the backend. Installed `@clerk/express`. Added `CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` to `backend/.env` and `.env.example` (both required by `clerkMiddleware()`). `server.js` conditionally registers `clerkMiddleware()` when both keys are present — public routes stay reachable during setup. Added `backend/middleware/requireAuth.js` — reads `getAuth(req)`, attaches `req.auth`, and returns 401 with our standard error envelope on missing session (also swallows the `getAuth`-without-middleware throw). Added `models/user.model.js` (clerkUserId unique+indexed, email, name, favorites → Restaurant refs, timestamps). Added `utils/getOrCreateUser.js` — lazy-creates the DB user on first authed request via `clerkClient.users.getUser` + `$setOnInsert` upsert (race-safe). Added `controllers/user.controller.js` (`getMe`) and `routes/user.routes.js` (`GET /me` → requireAuth → getMe), mounted at `/api/users`. Verified: `GET /api/users/me` returns 401 without a session; public routes (`/api/health`, `/api/restaurants`) still 200. Positive-path verification (200 + user doc from a real session) requires the user's Clerk keys pasted into `backend/.env`. ✅ Done
