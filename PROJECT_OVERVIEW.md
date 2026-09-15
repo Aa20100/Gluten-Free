@@ -86,11 +86,24 @@ backend/
 | `clerkUserId` | String | **required**, **unique**, indexed. Clerk's stable user id — how a `req.auth.userId` maps to a row here. |
 | `email` | String | Snapshot from Clerk at creation. Not the source of truth. |
 | `name` | String | Snapshot from Clerk at creation. |
-| `favorites` | [ObjectId] | Refs to `Restaurant` docs. Enables `.populate("favorites")` later. Default `[]`. |
+| `favorites` | [ObjectId] | Refs to `Restaurant` docs. Read endpoints return this **populated** with a slim restaurant projection (name, address, imageUrl, features, cuisine, restaurantType, averageRating, reviewCount) so the client can render cards directly. Writes go through `$addToSet` / `$pull` to dedupe. Default `[]`. |
 | `createdAt` | Date | auto (via `timestamps`) |
 | `updatedAt` | Date | auto (via `timestamps`) |
 
 Users are **lazy-created** on first authenticated request via `backend/utils/getOrCreateUser.js`, which fetches email/name from Clerk on insert. See [Auth strategy](#auth-strategy).
+
+### Review (`backend/models/review.model.js`)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `user` | ObjectId | **required**. Ref to `User`. |
+| `restaurant` | ObjectId | **required**, indexed. Ref to `Restaurant`. |
+| `rating` | Number | **required**, `min: 1`, `max: 5`. |
+| `text` | String | **required**, trimmed. |
+| `createdAt` | Date | auto (via `timestamps`) |
+| `updatedAt` | Date | auto (via `timestamps`) |
+
+**Unique compound index** on `(user, restaurant)` — one review per user per restaurant (duplicates return `409`). After any create / update / delete, `backend/utils/recomputeRestaurantRating.js` re-averages the restaurant's reviews in one aggregation and persists `averageRating` + `reviewCount` on the `Restaurant` doc. (Note: the seed script sets cosmetic `averageRating` / `reviewCount` values on restaurants for demo purposes; the first real review on any of those restaurants will overwrite them with true values.)
 
 ### Restaurant (`backend/models/restaurant.model.js`)
 
@@ -143,7 +156,20 @@ All routes are mounted under `/api`.
 
 | Method | Path | Auth | Description |
 | --- | --- | --- | --- |
-| `GET` | `/api/users/me` | required | Returns the DB `User` doc for the current Clerk session. Lazy-creates the row on the first hit via `getOrCreateUser` (snapshot email + name from Clerk). Responds `401` without a valid session. |
+| `GET` | `/api/users/me` | required | Returns the DB `User` doc for the current Clerk session, with `favorites` populated. Lazy-creates the row on the first hit via `getOrCreateUser` (snapshot email + name from Clerk). Responds `401` without a valid session. |
+| `GET` | `/api/users/me/favorites` | required | Returns the current user's favorite restaurants, populated. |
+| `POST` | `/api/users/me/favorites/:restaurantId` | required | Adds a restaurant to favorites. Dedupes via `$addToSet` so double-adds are no-ops. Returns the updated populated favorites array. `400` on malformed id, `404` if the restaurant doesn't exist. |
+| `DELETE` | `/api/users/me/favorites/:restaurantId` | required | Removes a restaurant from favorites (via `$pull`). Returns the updated populated favorites array. |
+
+### Reviews
+
+| Method | Path | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/reviews/restaurant/:restaurantId` | public | Returns all reviews for the restaurant, newest first, each populated with `user.name`. |
+| `GET` | `/api/reviews/me` | required | Returns the current user's reviews, newest first, each populated with `restaurant.name / address / imageUrl`. |
+| `POST` | `/api/reviews` | required | Body: `{ restaurant, rating, text }`. Creates the review, recomputes the restaurant's `averageRating` + `reviewCount`, and returns the created doc populated with `user.name`. Returns `409` if the current user already has a review for this restaurant. |
+| `PUT` | `/api/reviews/:id` | required | Ownership-checked (`403` if the review isn't yours). Body may contain `rating` and/or `text` (partial update). Recomputes the restaurant's aggregate after saving. Returns the updated review populated. |
+| `DELETE` | `/api/reviews/:id` | required | Ownership-checked (`403` if not yours). Recomputes the restaurant's aggregate after deletion. Returns `204`. |
 
 ### Restaurants
 
@@ -205,6 +231,7 @@ Auth is handled by [Clerk](https://clerk.com/) on the frontend via `@clerk/nextj
 - **Class 4** — Filter panel on `/restaurants`. Added a sticky sidebar (desktop) / slide-out drawer (mobile, via a "Filters" button) with three checkbox-group sections — Dietary (13 flags), Restaurant Features (7 flags), Restaurant Type (8 flags). Each checkbox toggles its category's csv URL query param, which the listing refetches on. **Gluten Free** defaults to checked when the URL has no `dietary` key, is rendered with an emerald "Core" badge and highlighted row, and is excluded from the active-filter count. Explicit `?dietary=` in the URL is respected as "user opted out of GF". "Clear all" resets everything to just `?dietary=glutenFree`. Active-filter count is displayed near the top. `src/lib/api.js` was updated to accept arrays for query-param values and auto-join them into csv strings. Escape key closes the mobile drawer. ✅ Done
 - **Class 4** — Geolocation + nearby search. Extracted the homepage's "Find Restaurants Near You" button into `src/components/NearbyButton.js` (client component). Click asks the browser for `navigator.geolocation`, navigates to `/restaurants?lat=&lng=&radius=25` on grant, and shows a friendly inline fallback (with a "Search by city" link) on denial, timeout, or an unsupported browser. Extended `/restaurants` to read `lat`/`lng`/`radius` from the URL and forward them to the API — this also fixed a latent bug where hand-crafted geo URLs were ignored. When both `lat` and `lng` are present, a small banner renders above the search bar: "📍 Showing restaurants within **N** km of your location — Change", where **N** comes from the URL's `radius` (defaulting to 25). "Change" clears just `lat`/`lng`/`radius` from the URL while leaving every other filter intact. Added 3 seed restaurants in the Plainsboro / Princeton, NJ area (Millstone Bakery, Nassau Street Kitchen, Ridge Road Cafe) so a local geolocation returns results. ✅ Done
 - **Class 7** — Clerk auth on the frontend. Installed `@clerk/nextjs` v7 (Core 3). Wrapped `<html>` in `<ClerkProvider>` inside `src/app/layout.js`. Added `frontend/middleware.js` using `clerkMiddleware` + `createRouteMatcher` to protect `/profile`, `/favorites`, and write-side forum routes (`/forum/new`, `/forum/<id>/comment`) while keeping browse routes public. Updated `Header` to swap between `<SignInButton mode="modal">` (opens Clerk's sign-in modal) and `<UserButton>` (avatar menu) via `<Show when="signed-out">` / `<Show when="signed-in">` — the Core 3 replacement for the removed `<SignedIn>` / `<SignedOut>` components. Added `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` to `frontend/.env.local` (empty) and `frontend/.env.example`. Created `src/app/profile/page.js` — a client component using `useUser()` to display the signed-in user's name and email; middleware guarantees the user is authenticated by the time the page renders. ✅ Done
+- **Class 8** — Favorites + Reviews on the backend. Extended `controllers/user.controller.js` with `getFavorites` / `addFavorite` (dedupes via `$addToSet`, 400 on bad id, 404 for missing restaurant) / `removeFavorite` (`$pull`), all returning the populated favorites list. Extended `routes/user.routes.js` with `GET /me/favorites`, `POST /me/favorites/:restaurantId`, `DELETE /me/favorites/:restaurantId` (all `requireAuth`); `getMe` now returns `favorites` populated too. Added `models/review.model.js` (user + restaurant refs, 1–5 rating, text, timestamps, unique compound `(user, restaurant)` index — duplicate reviews return 409), `validators/review.validator.js` (hand-rolled create/update: rating 1–5, non-empty text), and `controllers/review.controller.js` — CRUD with ownership checks (`403` when editing/deleting someone else's review) and a `getMyReviews` protected listing. Extracted the shared aggregate-recompute into `utils/recomputeRestaurantRating.js`, which runs one `$group` aggregation over the review collection and persists `averageRating` + `reviewCount` on the restaurant doc after every create / update / delete. Added `routes/review.routes.js` mounted at `/api/reviews`. Verified via a scripted end-to-end run against the DB (32 assertions covering favorites dedupe, ownership 403s, unique 409, and recompute math from 0 → 5 → 4 → 4.5 → 0). ✅ Done
 - **Class 7** — Clerk verification on the backend. Installed `@clerk/express`. Added `CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` to `backend/.env` and `.env.example` (both required by `clerkMiddleware()`). `server.js` conditionally registers `clerkMiddleware()` when both keys are present — public routes stay reachable during setup. Added `backend/middleware/requireAuth.js` — reads `getAuth(req)`, attaches `req.auth`, and returns 401 with our standard error envelope on missing session (also swallows the `getAuth`-without-middleware throw). Added `models/user.model.js` (clerkUserId unique+indexed, email, name, favorites → Restaurant refs, timestamps). Added `utils/getOrCreateUser.js` — lazy-creates the DB user on first authed request via `clerkClient.users.getUser` + `$setOnInsert` upsert (race-safe). Added `controllers/user.controller.js` (`getMe`) and `routes/user.routes.js` (`GET /me` → requireAuth → getMe), mounted at `/api/users`. Verified: `GET /api/users/me` returns 401 without a session; public routes (`/api/health`, `/api/restaurants`) still 200. Positive-path verification (200 + user doc from a real session) requires the user's Clerk keys pasted into `backend/.env`. ✅ Done
 
 ## Known issues / open items
