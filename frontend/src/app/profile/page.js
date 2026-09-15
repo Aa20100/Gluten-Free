@@ -1,46 +1,57 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth, useUser } from "@clerk/nextjs";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { getMe } from "@/lib/api";
+import RestaurantCard from "@/components/RestaurantCard";
+import StarRating from "@/components/StarRating";
+import { getMe, getFavorites, getMyReviews } from "@/lib/api";
 
-/**
- * Signed-in-only profile page. Middleware already guarantees the request
- * is authenticated by the time this renders. Two data sources:
- *
- * - Clerk (`useUser`) — the authoritative identity, immediately available
- *   on the client after hydration.
- * - Our backend DB (`GET /api/users/me`) — the row created lazily on the
- *   first authed request. We fetch this to prove the frontend → Clerk →
- *   backend → Mongo round-trip works.
- */
 export default function ProfilePage() {
   const { isLoaded: userLoaded, user } = useUser();
   const { isLoaded: authLoaded, getToken } = useAuth();
 
   const [db, setDb] = useState({ status: "loading", data: null, error: null });
+  const [favorites, setFavorites] = useState({ status: "loading", data: [], error: null });
+  const [myReviews, setMyReviews] = useState({ status: "loading", data: [], error: null });
 
   useEffect(() => {
-    // Wait until Clerk has hydrated so getToken() actually resolves.
     if (!authLoaded) return;
     let cancelled = false;
 
-    getMe(getToken)
-      .then((data) => {
+    // Kick off all three requests in parallel. Each has its own state slot
+    // so a failure in one doesn't wipe out the others.
+    (async () => {
+      try {
+        const data = await getMe(getToken);
         if (!cancelled) setDb({ status: "success", data, error: null });
-      })
-      .catch((error) => {
+      } catch (error) {
         if (!cancelled) setDb({ status: "error", data: null, error });
-      });
+      }
+    })();
 
-    return () => {
-      cancelled = true;
-    };
-    // getToken from useAuth is stable across renders per Clerk's design;
-    // we only re-run when auth loads. eslint doesn't know that.
+    (async () => {
+      try {
+        const data = await getFavorites(getToken);
+        if (!cancelled) setFavorites({ status: "success", data, error: null });
+      } catch (error) {
+        if (!cancelled) setFavorites({ status: "error", data: [], error });
+      }
+    })();
+
+    (async () => {
+      try {
+        const data = await getMyReviews(getToken);
+        if (!cancelled) setMyReviews({ status: "success", data, error: null });
+      } catch (error) {
+        if (!cancelled) setMyReviews({ status: "error", data: [], error });
+      }
+    })();
+
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoaded]);
 
@@ -49,13 +60,13 @@ export default function ProfilePage() {
       <Header />
 
       <main className="flex-1">
-        <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
+        <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
           <h1 className="text-3xl font-extrabold tracking-tight text-stone-900 sm:text-4xl">
             Your profile
           </h1>
 
-          {/* Clerk identity — always available once useUser has loaded. */}
-          <Section title="Account (from Clerk)">
+          {/* Clerk identity */}
+          <Section title="Account">
             {!userLoaded ? (
               <Line muted>Loading your details…</Line>
             ) : !user ? (
@@ -64,60 +75,80 @@ export default function ProfilePage() {
               <dl className="space-y-3">
                 <Row term="Name">
                   {user.fullName ||
-                    [user.firstName, user.lastName]
-                      .filter(Boolean)
-                      .join(" ") ||
+                    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
                     "—"}
                 </Row>
                 <Row term="Email">
                   {user.primaryEmailAddress?.emailAddress || "—"}
                 </Row>
+                {db.status === "success" && db.data.createdAt && (
+                  <Row term="Member since">
+                    {new Date(db.data.createdAt).toLocaleDateString()}
+                  </Row>
+                )}
               </dl>
+            )}
+            {db.status === "error" && (
+              <p className="mt-3 text-sm text-red-700">
+                Couldn&apos;t load your SafeBite record: {db.error?.message}
+              </p>
             )}
           </Section>
 
-          {/* Backend DB record — proves the auth round-trip works. */}
-          <Section title="SafeBite record (from our backend)">
-            {db.status === "loading" && <Line muted>Loading from API…</Line>}
-            {db.status === "error" && (
-              <div className="space-y-2 text-sm">
-                <Line className="font-semibold text-red-700">
-                  Couldn&apos;t load your SafeBite record.
-                </Line>
-                <Line muted>{db.error?.message || "Unknown error"}</Line>
-                <Line muted>
-                  Make sure the backend is running and{" "}
-                  <code className="rounded bg-stone-100 px-1">
-                    CLERK_PUBLISHABLE_KEY
-                  </code>{" "}
-                  and{" "}
-                  <code className="rounded bg-stone-100 px-1">
-                    CLERK_SECRET_KEY
-                  </code>{" "}
-                  are set in <code className="rounded bg-stone-100 px-1">backend/.env</code>.
-                </Line>
-              </div>
+          {/* Favorites */}
+          <Section title="Your favorites">
+            {favorites.status === "loading" && (
+              <CardGridSkeleton />
             )}
-            {db.status === "success" && (
-              <dl className="space-y-3">
-                <Row term="Favorites">
-                  <span className="inline-flex items-center gap-2">
-                    <span className="rounded-full bg-orange-100 px-2.5 py-0.5 text-sm font-bold text-orange-800">
-                      {db.data.favorites?.length ?? 0}
-                    </span>
-                    <span className="text-sm text-stone-500">
-                      restaurant{db.data.favorites?.length === 1 ? "" : "s"} saved
-                    </span>
-                  </span>
-                </Row>
-                <Row term="DB Email">{db.data.email || "—"}</Row>
-                <Row term="DB Name">{db.data.name || "—"}</Row>
-                <Row term="Member since">
-                  {db.data.createdAt
-                    ? new Date(db.data.createdAt).toLocaleDateString()
-                    : "—"}
-                </Row>
-              </dl>
+            {favorites.status === "error" && (
+              <ErrorLine detail={favorites.error?.message}>
+                Couldn&apos;t load your favorites.
+              </ErrorLine>
+            )}
+            {favorites.status === "success" && favorites.data.length === 0 && (
+              <EmptyState
+                title="You haven't saved any restaurants yet"
+                hint="Tap the heart on any restaurant to save it here."
+                cta={{ label: "Browse restaurants", href: "/restaurants" }}
+              />
+            )}
+            {favorites.status === "success" && favorites.data.length > 0 && (
+              <>
+                <p className="mb-4 text-sm text-stone-500">
+                  {favorites.data.length} saved
+                </p>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {favorites.data.map((r) => (
+                    <RestaurantCard key={r._id} restaurant={r} />
+                  ))}
+                </div>
+              </>
+            )}
+          </Section>
+
+          {/* My Reviews */}
+          <Section title="My reviews">
+            {myReviews.status === "loading" && (
+              <ReviewsSkeleton />
+            )}
+            {myReviews.status === "error" && (
+              <ErrorLine detail={myReviews.error?.message}>
+                Couldn&apos;t load your reviews.
+              </ErrorLine>
+            )}
+            {myReviews.status === "success" && myReviews.data.length === 0 && (
+              <EmptyState
+                title="You haven't written any reviews yet"
+                hint="Share your experience on any restaurant's page."
+                cta={{ label: "Browse restaurants", href: "/restaurants" }}
+              />
+            )}
+            {myReviews.status === "success" && myReviews.data.length > 0 && (
+              <ul className="divide-y divide-orange-100">
+                {myReviews.data.map((r) => (
+                  <MyReviewRow key={r._id} review={r} />
+                ))}
+              </ul>
             )}
           </Section>
         </div>
@@ -125,6 +156,58 @@ export default function ProfilePage() {
 
       <Footer />
     </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Sub-components
+// ────────────────────────────────────────────────────────────────────────
+
+function MyReviewRow({ review }) {
+  const r = review.restaurant;
+  return (
+    <li className="flex flex-col gap-2 py-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-baseline gap-2">
+          {r?._id ? (
+            <Link
+              href={`/restaurants/${r._id}`}
+              className="text-base font-semibold text-stone-900 hover:text-orange-800"
+            >
+              {r.name || "Untitled restaurant"}
+            </Link>
+          ) : (
+            <span className="text-base font-semibold text-stone-900">
+              {r?.name || "Untitled restaurant"}
+            </span>
+          )}
+          {r?.address?.city && r?.address?.state && (
+            <span className="text-xs text-stone-500">
+              {r.address.city}, {r.address.state}
+            </span>
+          )}
+        </div>
+        <div className="mt-1 flex items-center gap-2">
+          <StarRating value={review.rating} size="sm" />
+          <span className="text-xs text-stone-500">
+            {review.createdAt
+              ? new Date(review.createdAt).toLocaleDateString()
+              : ""}
+          </span>
+        </div>
+        <p className="mt-2 line-clamp-3 text-sm text-stone-700">
+          {review.text}
+        </p>
+      </div>
+      {r?._id && (
+        <Link
+          href={`/restaurants/${r._id}`}
+          className="shrink-0 text-sm font-semibold text-orange-700 hover:text-orange-800"
+        >
+          View & edit →
+        </Link>
+      )}
+    </li>
   );
 }
 
@@ -152,12 +235,67 @@ function Row({ term, children }) {
 
 function Line({ children, muted, className = "" }) {
   return (
-    <p
-      className={
-        (muted ? "text-stone-500 " : "text-stone-800 ") + className
-      }
-    >
+    <p className={(muted ? "text-stone-500 " : "text-stone-800 ") + className}>
       {children}
     </p>
+  );
+}
+
+function ErrorLine({ children, detail }) {
+  return (
+    <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm">
+      <p className="font-semibold text-red-800">{children}</p>
+      {detail && <p className="mt-1 text-red-700">{detail}</p>}
+    </div>
+  );
+}
+
+function EmptyState({ title, hint, cta }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-8 text-center">
+      <p className="text-lg font-semibold text-stone-800">{title}</p>
+      {hint && <p className="mt-2 text-sm text-stone-600">{hint}</p>}
+      {cta && (
+        <Link
+          href={cta.href}
+          className="mt-4 inline-block rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-700"
+        >
+          {cta.label}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function CardGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="animate-pulse overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm"
+        >
+          <div className="h-40 bg-orange-50" />
+          <div className="space-y-3 p-5">
+            <div className="h-5 w-2/3 rounded bg-stone-200" />
+            <div className="h-4 w-1/3 rounded bg-stone-100" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ReviewsSkeleton() {
+  return (
+    <ul className="animate-pulse divide-y divide-orange-100">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <li key={i} className="space-y-2 py-4">
+          <div className="h-4 w-1/3 rounded bg-stone-200" />
+          <div className="h-3 w-1/4 rounded bg-stone-100" />
+          <div className="h-3 w-full rounded bg-stone-100" />
+        </li>
+      ))}
+    </ul>
   );
 }

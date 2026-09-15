@@ -118,3 +118,87 @@ export async function getMe(getToken) {
   const headers = await getAuthHeaders(getToken);
   return request(buildUrl("/users/me"), { headers });
 }
+
+// ── Favorites ────────────────────────────────────────────────────────────
+
+/** GET /api/users/me/favorites → populated Restaurant[]. */
+export async function getFavorites(getToken) {
+  const headers = await getAuthHeaders(getToken);
+  return request(buildUrl("/users/me/favorites"), { headers });
+}
+
+/** POST /api/users/me/favorites/:restaurantId → updated favorites (populated). */
+export async function addFavorite(getToken, restaurantId) {
+  const headers = await getAuthHeaders(getToken);
+  return request(
+    buildUrl(`/users/me/favorites/${encodeURIComponent(restaurantId)}`),
+    { method: "POST", headers }
+  );
+}
+
+/** DELETE /api/users/me/favorites/:restaurantId → updated favorites (populated). */
+export async function removeFavorite(getToken, restaurantId) {
+  const headers = await getAuthHeaders(getToken);
+  return request(
+    buildUrl(`/users/me/favorites/${encodeURIComponent(restaurantId)}`),
+    { method: "DELETE", headers }
+  );
+}
+
+// ── Reviews ──────────────────────────────────────────────────────────────
+
+/** GET /api/reviews/restaurant/:id → Review[] (public), populated with user.name. */
+export function getReviewsForRestaurant(restaurantId) {
+  return request(
+    buildUrl(`/reviews/restaurant/${encodeURIComponent(restaurantId)}`)
+  );
+}
+
+/** GET /api/reviews/me → Review[] (authed), populated with restaurant.name/address/imageUrl. */
+export async function getMyReviews(getToken) {
+  const headers = await getAuthHeaders(getToken);
+  return request(buildUrl("/reviews/me"), { headers });
+}
+
+/** POST /api/reviews → the created Review, populated. */
+export async function createReview(getToken, { restaurant, rating, text }) {
+  const headers = {
+    ...(await getAuthHeaders(getToken)),
+    "Content-Type": "application/json",
+  };
+  return request(buildUrl("/reviews"), {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ restaurant, rating, text }),
+  });
+}
+
+/** PUT /api/reviews/:id → the updated Review, populated. */
+export async function updateReview(getToken, id, { rating, text }) {
+  const headers = {
+    ...(await getAuthHeaders(getToken)),
+    "Content-Type": "application/json",
+  };
+  const body = {};
+  if (rating !== undefined) body.rating = rating;
+  if (text !== undefined) body.text = text;
+  return request(buildUrl(`/reviews/${encodeURIComponent(id)}`), {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(body),
+  });
+}
+
+/** DELETE /api/reviews/:id → 204 (no content). */
+export async function deleteReview(getToken, id) {
+  const headers = await getAuthHeaders(getToken);
+  // No JSON to parse on a 204 — use fetch directly and only check status.
+  const url = buildUrl(`/reviews/${encodeURIComponent(id)}`);
+  const res = await fetch(url, { method: "DELETE", headers });
+  if (!res.ok) {
+    const err = new Error(`Delete review failed: ${res.status} ${res.statusText}`);
+    err.status = res.status;
+    throw err;
+  }
+  return true;
+}
