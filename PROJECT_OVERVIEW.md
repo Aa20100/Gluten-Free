@@ -104,7 +104,7 @@ Users are **lazy-created** on first authenticated request via `backend/utils/get
 | `createdAt` | Date | auto (via `timestamps`) |
 | `updatedAt` | Date | auto (via `timestamps`) |
 
-**Unique compound index** on `(user, restaurant)` — one review per user per restaurant (duplicates return `409`). After any create / update / delete, `backend/utils/recomputeRestaurantRating.js` re-averages the restaurant's reviews in one aggregation and persists `averageRating` + `reviewCount` on the `Restaurant` doc. (Note: the seed script sets cosmetic `averageRating` / `reviewCount` values on restaurants for demo purposes; the first real review on any of those restaurants will overwrite them with true values.)
+**Unique compound index** on `(user, restaurant)` — one review per user per restaurant (duplicates return `409`). After any create / update / delete, `backend/utils/recomputeRestaurantRating.js` re-averages the restaurant's reviews in one aggregation and persists `averageRating` + `reviewCount` on the `Restaurant` doc. Seeded restaurants start at `averageRating: 0` / `reviewCount: 0` — the numbers only reflect real reviews.
 
 ### Restaurant (`backend/models/restaurant.model.js`)
 

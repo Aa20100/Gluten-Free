@@ -358,15 +358,21 @@ function RestaurantDetail({
           </div>
 
           <div className="flex flex-col items-start gap-3 sm:items-end">
-            <div className="flex items-baseline gap-2">
-              <StarRating value={averageRating} size="md" />
-              <span className="text-lg font-bold text-stone-900">
-                {averageRating.toFixed(1)}
-              </span>
-            </div>
-            <p className="text-xs text-stone-500">
-              {reviewCount} review{reviewCount === 1 ? "" : "s"}
-            </p>
+            {reviewCount > 0 ? (
+              <>
+                <div className="flex items-baseline gap-2">
+                  <StarRating value={averageRating} size="md" />
+                  <span className="text-lg font-bold text-stone-900">
+                    {averageRating.toFixed(1)}
+                  </span>
+                </div>
+                <p className="text-xs text-stone-500">
+                  {reviewCount} review{reviewCount === 1 ? "" : "s"}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-stone-500">No reviews yet</p>
+            )}
             <FavoriteButton
               isSignedIn={isSignedIn}
               userLoaded={userLoaded}

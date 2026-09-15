@@ -33,8 +33,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.8,
-    reviewCount: 312,
   },
   {
     name: "Torchy's on Barton Springs",
@@ -48,8 +46,6 @@ const SAMPLE_RESTAURANTS = [
     restaurantType: ["lunch", "dinner", "fast_food"],
     dietary: { glutenFree: true, vegetarian: true },
     features: { gfMenu: true, staffTrainedForCeliac: true, crossContaminationPrecautions: true },
-    averageRating: 4.3,
-    reviewCount: 587,
   },
   {
     name: "Verde Vine Wine Bar",
@@ -67,8 +63,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.6,
-    reviewCount: 189,
   },
   {
     name: "Bouldin Creek Cafe",
@@ -81,8 +75,6 @@ const SAMPLE_RESTAURANTS = [
     restaurantType: ["breakfast", "lunch"],
     dietary: { glutenFree: true, vegetarian: true, vegan: true, dairyFree: true, eggFree: false },
     features: { separateFryer: true, gfMenu: true, crossContaminationPrecautions: true },
-    averageRating: 4.5,
-    reviewCount: 421,
   },
 
   // ── Portland, OR ───────────────────────────────────────────────────────
@@ -105,8 +97,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.9,
-    reviewCount: 512,
   },
   {
     name: "Ground Breaker Brewing",
@@ -127,8 +117,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.7,
-    reviewCount: 298,
   },
   {
     name: "Kure Juice Bar",
@@ -149,8 +137,6 @@ const SAMPLE_RESTAURANTS = [
       nutFree: false,
     },
     features: { gfMenu: true, crossContaminationPrecautions: true },
-    averageRating: 4.4,
-    reviewCount: 176,
   },
 
   // ── Denver, CO ─────────────────────────────────────────────────────────
@@ -178,8 +164,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.8,
-    reviewCount: 402,
   },
   {
     name: "Beau Jo's Pizza",
@@ -196,8 +180,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.2,
-    reviewCount: 634,
   },
   {
     name: "Watercourse Foods",
@@ -210,8 +192,6 @@ const SAMPLE_RESTAURANTS = [
     restaurantType: ["breakfast", "lunch", "dinner"],
     dietary: { glutenFree: true, dairyFree: true, eggFree: true, vegan: true, vegetarian: true },
     features: { gfMenu: true, crossContaminationPrecautions: true },
-    averageRating: 4.5,
-    reviewCount: 355,
   },
 
   // ── Chicago, IL ────────────────────────────────────────────────────────
@@ -234,8 +214,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.7,
-    reviewCount: 268,
   },
   {
     name: "Da Luciano",
@@ -255,8 +233,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.6,
-    reviewCount: 511,
   },
   {
     name: "Defloured Bakery",
@@ -275,8 +251,6 @@ const SAMPLE_RESTAURANTS = [
       certifiedGlutenFree: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.8,
-    reviewCount: 213,
   },
 
   // ── New York, NY ───────────────────────────────────────────────────────
@@ -300,8 +274,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.9,
-    reviewCount: 741,
   },
   {
     name: "Modern Bread and Bagel",
@@ -320,8 +292,6 @@ const SAMPLE_RESTAURANTS = [
       certifiedGlutenFree: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.7,
-    reviewCount: 623,
   },
   {
     name: "Friedman's Chelsea Market",
@@ -339,8 +309,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.5,
-    reviewCount: 892,
   },
 
   // ── San Francisco, CA ──────────────────────────────────────────────────
@@ -362,8 +330,6 @@ const SAMPLE_RESTAURANTS = [
       certifiedGlutenFree: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.6,
-    reviewCount: 348,
   },
   {
     name: "Nourish Cafe",
@@ -380,8 +346,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.4,
-    reviewCount: 227,
   },
   {
     name: "Little Gem",
@@ -405,8 +369,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.5,
-    reviewCount: 401,
   },
 
   // ── Plainsboro / Princeton, NJ ─────────────────────────────────────────
@@ -435,8 +397,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.7,
-    reviewCount: 184,
   },
   {
     name: "Nassau Street Kitchen",
@@ -461,8 +421,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.6,
-    reviewCount: 267,
   },
   {
     name: "Ridge Road Cafe",
@@ -492,8 +450,6 @@ const SAMPLE_RESTAURANTS = [
       staffTrainedForCeliac: true,
       crossContaminationPrecautions: true,
     },
-    averageRating: 4.5,
-    reviewCount: 221,
   },
 ];
 
