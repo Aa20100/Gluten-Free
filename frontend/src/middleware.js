@@ -11,8 +11,8 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 const isProtectedRoute = createRouteMatcher([
   "/profile(.*)",
   "/favorites(.*)",
-  "/forum/new(.*)", // create a new thread — placeholder until the forum ships
-  "/forum/(.*)/comment(.*)", // post a comment on a thread — placeholder
+  "/forum/new(.*)", // create a new post
+  "/forum/(.*)/comment(.*)", // post a comment (Class 10)
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

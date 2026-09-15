@@ -4,7 +4,7 @@ import { Show, SignInButton, UserButton } from "@clerk/nextjs";
 // href === null → not-yet-functional placeholder; renders as plain text.
 const navLinks = [
   { label: "Restaurants", href: "/restaurants" },
-  { label: "Forum", href: null },
+  { label: "Forum", href: "/forum" },
 ];
 
 export default function Header() {

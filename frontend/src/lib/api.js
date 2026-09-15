@@ -202,3 +202,69 @@ export async function deleteReview(getToken, id) {
   }
   return true;
 }
+
+// ── Posts ────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/posts — paginated feed.
+ * @param {{ category?: string, tag?: string, q?: string,
+ *           sort?: "recent"|"popular", page?: number, limit?: number }} params
+ * @returns {Promise<{ posts, total, page, limit, pageCount }>}
+ */
+export function getPosts(params) {
+  return request(buildUrl("/posts", params));
+}
+
+/** GET /api/posts/:id — public. */
+export function getPostById(id) {
+  return request(buildUrl(`/posts/${encodeURIComponent(id)}`));
+}
+
+/**
+ * POST /api/posts — authed. Signature is `(payload, getToken)` to match the
+ * spec for this feature; note the earlier reviews wrappers use the reverse
+ * order (`getToken` first).
+ */
+export async function createPost(payload, getToken) {
+  const headers = {
+    ...(await getAuthHeaders(getToken)),
+    "Content-Type": "application/json",
+  };
+  return request(buildUrl("/posts"), {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+}
+
+/** PUT /api/posts/:id — authed. Partial update. */
+export async function updatePost(id, payload, getToken) {
+  const headers = {
+    ...(await getAuthHeaders(getToken)),
+    "Content-Type": "application/json",
+  };
+  return request(buildUrl(`/posts/${encodeURIComponent(id)}`), {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(payload),
+  });
+}
+
+/** DELETE /api/posts/:id — authed → 204. */
+export async function deletePost(id, getToken) {
+  const headers = await getAuthHeaders(getToken);
+  const url = buildUrl(`/posts/${encodeURIComponent(id)}`);
+  const res = await fetch(url, { method: "DELETE", headers });
+  if (!res.ok) {
+    const err = new Error(`Delete post failed: ${res.status} ${res.statusText}`);
+    err.status = res.status;
+    throw err;
+  }
+  return true;
+}
+
+/** GET /api/posts/me — authed. */
+export async function getMyPosts(getToken) {
+  const headers = await getAuthHeaders(getToken);
+  return request(buildUrl("/posts/me"), { headers });
+}
