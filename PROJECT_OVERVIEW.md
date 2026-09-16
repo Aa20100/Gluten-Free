@@ -90,6 +90,7 @@ backend/
 | `clerkUserId` | String | **required**, **unique**, indexed. Clerk's stable user id — how a `req.auth.userId` maps to a row here. |
 | `email` | String | Snapshot from Clerk at creation. Not the source of truth. |
 | `name` | String | Snapshot from Clerk at creation. |
+| `role` | String | Enum `"user"` (default) or `"moderator"`. Only moderators can pin/lock/mod-delete posts and list reports. Promotion is manual (no self-service endpoint). See [Auth strategy → Roles](#auth-strategy). |
 | `favorites` | [ObjectId] | Refs to `Restaurant` docs. Read endpoints return this **populated** with a slim restaurant projection (name, address, imageUrl, features, cuisine, restaurantType, averageRating, reviewCount) so the client can render cards directly. Writes go through `$addToSet` / `$pull` to dedupe. Default `[]`. |
 | `createdAt` | Date | auto (via `timestamps`) |
 | `updatedAt` | Date | auto (via `timestamps`) |
@@ -116,6 +117,36 @@ Users are **lazy-created** on first authenticated request via `backend/utils/get
 | `score` | Number (**virtual**) | `upvotes.length - downvotes.length`. `toJSON` / `toObject` include virtuals, so responses always carry it. |
 
 **Indexes**: compound `{ category: 1, createdAt: -1 }` for filtered listings and `{ createdAt: -1 }` for the default recent-first feed.
+
+### Comment (`backend/models/comment.model.js`)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `post` | ObjectId | **required**, indexed. Ref to `Post`. |
+| `author` | ObjectId | **required**. Ref to `User`. |
+| `parent` | ObjectId | Ref to another `Comment`. `null` (default) for top-level; set for a reply. The API returns comments **flat** with `parent` populated as an id — the frontend nests them. |
+| `body` | String | **required**. |
+| `likes` | [ObjectId] | Refs to `User`. `POST /:id/like` toggles the current user in this set atomically. |
+| `reportCount` | Number | default `0`. Incremented on `POST /api/reports` when this comment is the target. |
+| `deleted` | Boolean | default `false`. Set by the author's DELETE (soft-delete). When true, the wire response redacts `body` to `"[deleted]"` and `author.name` to `"[deleted]"`; the doc itself stays so any child replies still have a parent. |
+| `createdAt` | Date | auto (via `timestamps`) |
+| `updatedAt` | Date | auto (via `timestamps`) |
+
+**Index**: compound `{ post: 1, createdAt: 1 }` for the "all comments for a post, oldest first" read path.
+
+### Report (`backend/models/report.model.js`)
+
+Polymorphic — one report row can target either a `Post` or a `Comment`.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `reporter` | ObjectId | **required**. Ref to `User`. |
+| `targetType` | String | **required**. Enum `"post"` or `"comment"`. |
+| `targetId` | ObjectId | **required**. Id of the target doc (no ref — polymorphic). |
+| `reason` | String | **required**, trimmed. |
+| `createdAt` | Date | auto (via `timestamps`) |
+
+`POST /api/reports` creates the row and `$inc`s `reportCount` on the target atomically; if the target doesn't exist, the report isn't created and the endpoint returns `404`. Only moderators can list reports.
 
 ### Review (`backend/models/review.model.js`)
 
@@ -203,9 +234,13 @@ All routes are mounted under `/api`.
 | `GET` | `/api/posts` | public | Paginated feed. See query params below. Response: `{ posts, total, page, limit, pageCount }`; each post is populated with `author.name` and carries the virtual `score`. Pinned posts always come first regardless of `sort`. |
 | `GET` | `/api/posts/me` | required | Returns the current user's posts, newest first (mounted before `/:id` in the router so the segment doesn't get eaten by the param). |
 | `GET` | `/api/posts/:id` | public | One post, populated with `author.name`. `400` on malformed id, `404` if missing. |
-| `POST` | `/api/posts` | required | Body: `{ title, body, category, tags?, imageUrls? }`. Validated. Returns `201` + created doc populated. |
-| `PUT` | `/api/posts/:id` | required | Author-only (`403` otherwise). Partial update over `title / body / category / tags / imageUrls`. Vote / moderation fields are NOT editable here. |
-| `DELETE` | `/api/posts/:id` | required | Author-only for now (`403` otherwise; moderator role TBD). Returns `204`. |
+| `POST` | `/api/posts` | required | Body: `{ title, body, category, tags?, imageUrls? }`. Accepts either JSON or multipart (`images` field). Backend uploads any files to Cloudinary and prepends the resulting `secure_url`s to `imageUrls`. Returns `201` + populated doc. |
+| `PUT` | `/api/posts/:id` | required | Author-only (`403` otherwise). Same JSON-or-multipart shape. Partial update over `title / body / category / tags`. Image handling: sending `imageUrls` = "URLs I want to keep" (client removes some); new file uploads append; sending neither leaves the existing set untouched. |
+| `DELETE` | `/api/posts/:id` | required | Author-only (`403` otherwise). Returns `204`. |
+| `POST` | `/api/posts/:id/vote` | required | Body: `{ direction }` where direction is `"up"`, `"down"`, or `"clear"`. Set-based semantics: the client sends the desired end state. `up` puts the user in `upvotes` (and out of `downvotes`); `down` mirrors; `clear` removes them from both. Returns the updated post (with `score`) and a `userVote` convenience field. `403` if the post is locked. |
+| `POST` | `/api/posts/:id/pin` | moderator | Toggles `isPinned`. |
+| `POST` | `/api/posts/:id/lock` | moderator | Toggles `isLocked`. When locked, new comments and votes on this post return `403`. |
+| `DELETE` | `/api/posts/:id/moderate` | moderator | Moderator can delete any post. Returns `204`. |
 
 **`GET /api/posts` query params** — all optional, combinable:
 
@@ -217,6 +252,23 @@ All routes are mounted under `/api`.
 | `sort` | `"recent"` (default) or `"popular"` | `recent` = createdAt desc; `popular` = score desc, then createdAt desc. Pinned posts are always prepended. |
 | `page` | number | 1-based. Defaults to `1`. |
 | `limit` | number | Defaults to `20`, capped at `100`. |
+
+### Comments
+
+| Method | Path | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/comments/post/:postId` | public | All comments for a post, oldest first, each populated with `author.name`. Returned **flat** with `parent` set to the parent id (or `null`); the frontend nests. Soft-deleted comments come back with `body = "[deleted]"` and `author.name = "[deleted]"`. |
+| `POST` | `/api/comments` | required | Body: `{ post, body, parent? }`. Rejects with `403` if the post is `isLocked`. Reply's `parent` must belong to the same post (400 otherwise). |
+| `PUT` | `/api/comments/:id` | required | Author-only (`403` otherwise). Partial: `body`. Editing un-sets the `deleted` flag. |
+| `DELETE` | `/api/comments/:id` | required | Author-only (`403`). **Soft delete**: sets `deleted: true`, replaces `body` with `"[deleted]"`, keeps the doc so replies still have a parent. Returns the redacted doc (200), not 204. |
+| `POST` | `/api/comments/:id/like` | required | Toggles the current user in `likes` (atomic `$addToSet` / `$pull`). Returns the comment + `{ likeCount, likedByMe }`. |
+
+### Reports
+
+| Method | Path | Auth | Description |
+| --- | --- | --- | --- |
+| `POST` | `/api/reports` | required | Body: `{ targetType, targetId, reason }`. Creates the report and `$inc`s `reportCount` on the target (Post or Comment) atomically. `400` on bad shape, `404` if the target doesn't exist. |
+| `GET` | `/api/reports` | moderator | Lists all reports, newest first, populated with `reporter.name`. |
 
 ### Restaurants
 
@@ -272,6 +324,19 @@ Auth is handled by [Clerk](https://clerk.com/) on the frontend via `@clerk/nextj
 - **Backend**: Uses `@clerk/express`. `server.js` registers `clerkMiddleware()` globally when both `CLERK_SECRET_KEY` and `CLERK_PUBLISHABLE_KEY` are set — this populates `req.auth` on every request from a session cookie or `Authorization: Bearer <token>` (without rejecting). Per-route protection lives in `backend/middleware/requireAuth.js`, which calls `getAuth(req)`, checks `userId`, and responds `401` (matching our error-envelope format) if the request isn't authenticated. Registration is skipped with a console warning when keys are missing so the public routes still work during setup — protected routes just 401 until the keys are pasted in.
 - **User lazy-creation**: `backend/utils/getOrCreateUser.js` maps Clerk's `userId` to a row in our `users` collection. Fast path is `findOne({ clerkUserId })`; on first sight, it fetches the Clerk user via `clerkClient.users.getUser`, snapshots the primary email + name, and upserts with `$setOnInsert` so two concurrent first-requests don't race into a duplicate-key error.
 
+### Roles
+
+Every `User` doc has a `role` field, default `"user"`. The only other value is `"moderator"`, which unlocks:
+
+- `POST /api/posts/:id/pin` — pin/unpin (toggles `isPinned`)
+- `POST /api/posts/:id/lock` — lock/unlock (toggles `isLocked`)
+- `DELETE /api/posts/:id/moderate` — delete any post
+- `GET /api/reports` — list every report
+
+Enforcement lives in `backend/middleware/requireModerator.js`. It runs after `requireAuth`, resolves the DB `User` via `getOrCreateUser`, returns `403` if `role !== "moderator"`, and (on success) attaches the doc to `req.user` for downstream handlers. Promotion is manual — there's no self-service endpoint; a human sets `role: "moderator"` directly in Mongo (`db.users.updateOne({ clerkUserId: "user_…" }, { $set: { role: "moderator" } })`) or via a future admin UI.
+
+When a post has `isLocked: true`, `POST /api/comments` and `POST /api/posts/:id/vote` return `403` even for the post's own author — the post is effectively frozen for interaction until a moderator toggles the lock back off.
+
 ## Domain notes
 
 ### Forum categories
@@ -304,6 +369,7 @@ Values for `Restaurant.restaurantType` (enforced by the model's enum; exported a
 - **Class 4** — Filter panel on `/restaurants`. Added a sticky sidebar (desktop) / slide-out drawer (mobile, via a "Filters" button) with three checkbox-group sections — Dietary (13 flags), Restaurant Features (7 flags), Restaurant Type (8 flags). Each checkbox toggles its category's csv URL query param, which the listing refetches on. **Gluten Free** defaults to checked when the URL has no `dietary` key, is rendered with an emerald "Core" badge and highlighted row, and is excluded from the active-filter count. Explicit `?dietary=` in the URL is respected as "user opted out of GF". "Clear all" resets everything to just `?dietary=glutenFree`. Active-filter count is displayed near the top. `src/lib/api.js` was updated to accept arrays for query-param values and auto-join them into csv strings. Escape key closes the mobile drawer. ✅ Done
 - **Class 4** — Geolocation + nearby search. Extracted the homepage's "Find Restaurants Near You" button into `src/components/NearbyButton.js` (client component). Click asks the browser for `navigator.geolocation`, navigates to `/restaurants?lat=&lng=&radius=25` on grant, and shows a friendly inline fallback (with a "Search by city" link) on denial, timeout, or an unsupported browser. Extended `/restaurants` to read `lat`/`lng`/`radius` from the URL and forward them to the API — this also fixed a latent bug where hand-crafted geo URLs were ignored. When both `lat` and `lng` are present, a small banner renders above the search bar: "📍 Showing restaurants within **N** km of your location — Change", where **N** comes from the URL's `radius` (defaulting to 25). "Change" clears just `lat`/`lng`/`radius` from the URL while leaving every other filter intact. Added 3 seed restaurants in the Plainsboro / Princeton, NJ area (Millstone Bakery, Nassau Street Kitchen, Ridge Road Cafe) so a local geolocation returns results. ✅ Done
 - **Class 7** — Clerk auth on the frontend. Installed `@clerk/nextjs` v7 (Core 3). Wrapped `<html>` in `<ClerkProvider>` inside `src/app/layout.js`. Added `frontend/middleware.js` using `clerkMiddleware` + `createRouteMatcher` to protect `/profile`, `/favorites`, and write-side forum routes (`/forum/new`, `/forum/<id>/comment`) while keeping browse routes public. Updated `Header` to swap between `<SignInButton mode="modal">` (opens Clerk's sign-in modal) and `<UserButton>` (avatar menu) via `<Show when="signed-out">` / `<Show when="signed-in">` — the Core 3 replacement for the removed `<SignedIn>` / `<SignedOut>` components. Added `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` to `frontend/.env.local` (empty) and `frontend/.env.example`. Created `src/app/profile/page.js` — a client component using `useUser()` to display the signed-in user's name and email; middleware guarantees the user is authenticated by the time the page renders. ✅ Done
+- **Class 10** — Full forum interactions on the backend: comments, votes, likes, reports, and moderation. Added `models/comment.model.js` (post/author/parent/body/likes/reportCount/deleted flag; compound index `{post,createdAt}`), `models/report.model.js` (polymorphic reporter/targetType/targetId/reason), and a `role` field on `User` (`"user"` default, `"moderator"` for elevated). New `middleware/requireModerator.js` resolves the DB user via `getOrCreateUser`, checks role, and attaches `req.user`. New `controllers/comment.controller.js` covers create (blocks on locked posts, validates parent belongs to same post), author-only update, author-only **soft delete** (`deleted: true` + `body: "[deleted]"` + author display redacted in the wire response so children still have a valid parent link), and a per-user like toggle via atomic `$addToSet`/`$pull`. New `controllers/report.controller.js` creates reports with an atomic `$inc` on the target's `reportCount` (or 404 if the target is missing) and exposes a moderator-only listing. Extended `controllers/post.controller.js` with `votePost` (set-based semantics: `up`/`down` bump one array and clear the other via `$addToSet`+`$pull`; `clear` empties both; `403` when the post is locked), `pinPost` / `lockPost` (moderator-only toggles), and `moderatorDeletePost`. Wired `/api/comments` + `/api/reports` in `routes/index.js` and added `/vote` + `/pin` + `/lock` + `/moderate` to `/api/posts/:id`. Verified via a scripted 44-check DB-level e2e covering: comment CRUD + ownership 403s + soft-delete redaction + reply parenting; like toggle; vote transitions (up/down/switch/clear); moderator middleware allow/deny; pin/lock toggles; **locked-post blocking of comments and votes**; report creation bumping `reportCount` on both post and comment targets + moderator listing + 400/404 shapes; and mod-delete on any post. ✅ Done
 - **Class 9** — Backend Cloudinary uploads (moved off the browser). Frontend now sends a multipart body with File objects; backend accepts either JSON or multipart on `POST /api/posts` and `PUT /api/posts/:id`. New modules: `config/cloudinary.js` (SDK configured once from env), `middleware/upload.js` (multer memory-storage, image-only, 5 MB / 6 files cap, translates limit errors to our 400 envelope), `middleware/normalizePostBody.js` (coerces multipart-delivered `tags` csv and `imageUrls` JSON back to arrays before validation), `utils/uploadToCloudinary.js` (streams buffers via `upload_stream`, no temp files, returns `secure_url`s). Controller `createPost` uploads any `req.files` and prepends the URLs to `imageUrls`; `updatePost` treats a client-sent `imageUrls` as "the URLs I want to keep" (removals happen client-side) and appends new uploads. `NEXT_PUBLIC_CLOUDINARY_*` env vars removed from the frontend. `CloudinaryUploader` rewritten to hold File objects with `URL.createObjectURL` previews (memoized so it doesn't trip Next 16's `set-state-in-effect` rule) and let the parent submit them. `api.js` `createPost` / `updatePost` switch to `FormData` when a `files` array is present, JSON otherwise — backwards-compatible. Verified with a 12-check DB-level e2e: real PNG bytes make it to Cloudinary and back with proper `https://res.cloudinary.com/...` URLs; text-only posts still work; update semantics (kept+new, clear-all, leave-alone) all correct. ✅ Done
 - **Class 9** — Forum on the frontend. Added `src/lib/postCategories.js` (single source of truth for the 9 category slugs → labels + emoji + blurb, mirroring the backend enum). Extended `src/lib/api.js` with the 6 post wrappers (`getPosts` / `getPostById` / `createPost` / `updatePost` / `deletePost` / `getMyPosts`) — note the create/update signatures use `(payload, getToken)` per the class spec, which is the reverse of the earlier `createReview(getToken, payload)` convention; something to reconcile in a later pass. Added `src/components/CloudinaryUploader.js` — direct-from-browser unsigned uploads to `https://api.cloudinary.com/v1_1/<cloud>/image/upload`, thumbnail grid with removable items, disables itself with an inline hint when the Cloudinary env vars aren't set (text posts still work). Built `/forum` (public listing with category rail, Recent/Popular sort, pagination, "New Post" that opens Clerk sign-in for guests), `/forum/new` (protected create form; middleware already gated `/forum/new(.*)`), and `/forum/[id]` (public detail with pinned badge, tags, images, and author-only Edit/Delete resolved by comparing `getMe()._id` to `post.author._id`; "Comments coming soon" placeholder for Class 10). Wired the Header's Forum link to `/forum`. Cleaned up the stale placeholder comments in middleware.js. ✅ Done
 - **Class 9** — Forum Post resource on the backend. Added `models/post.model.js` (title, body, author→User, category enum with 9 values exported as `POST_CATEGORIES`, tags, imageUrls, upvotes/downvotes as User ref arrays for natural dedupe, isPinned, isLocked, reportCount, timestamps). Virtual `score = upvotes.length - downvotes.length` with `toJSON: { virtuals: true }` so responses always carry it. Indexes on `{ category: 1, createdAt: -1 }` and `{ createdAt: -1 }`. Hand-rolled `validators/post.validator.js`. `controllers/post.controller.js` implements the 6 handlers: `getPosts` (paginated, aggregation-based so sort-by-`score` for the `popular` mode works, always prepends `isPinned: -1` so pinned rows come first regardless of sort, response includes `total` + `pageCount`, `limit` capped at 100), `getPostById`, `createPost`, `updatePost` (author-only, partial update, vote/mod fields NOT editable via PUT), `deletePost` (author-only), `getMyPosts`. `routes/post.routes.js` mounts them; `/me` is registered before `/:id` so the segment isn't captured by the param. Mounted at `/api/posts` in `routes/index.js`. Verified via a 32-check DB-level e2e run (create/read/update/delete, ownership 403s, bad-id 400, missing 404, all filter combinations, pagination + limit cap, popular sort, and pinned-first under both sort modes) plus HTTP smoke tests confirming public listing works, protected routes return 401, and auth runs before validators. ✅ Done

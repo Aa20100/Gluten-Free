@@ -21,6 +21,15 @@ const userSchema = new Schema(
     email: { type: String },
     name: { type: String },
 
+    // Coarse role. Only "moderator" gets pin / lock / moderator-delete
+    // + reports listing. Promotion is manual (Mongo shell / a dashboard
+    // we haven't built) — no self-service endpoint.
+    role: {
+      type: String,
+      enum: ["user", "moderator"],
+      default: "user",
+    },
+
     // Restaurants the user has favorited. Ref lets us .populate() later.
     favorites: [
       {

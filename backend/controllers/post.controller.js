@@ -241,3 +241,124 @@ export async function getMyPosts(req, res, next) {
     next(err);
   }
 }
+
+// ── Voting ───────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/posts/:id/vote — protected. Body: { direction }.
+ *
+ * Set-based semantics rather than a raw toggle: the client sends the
+ * desired end state and we ensure it. Simple, predictable, and matches
+ * a typical UI where clicking an already-active button sends `clear`.
+ *
+ *   direction === "up"    → user in upvotes,   removed from downvotes
+ *   direction === "down"  → user in downvotes, removed from upvotes
+ *   direction === "clear" → user removed from both
+ *
+ * Locked posts reject votes (403).
+ */
+export async function votePost(req, res, next) {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) return badId(res, id);
+
+    const { direction } = req.body || {};
+    if (!["up", "down", "clear"].includes(direction)) {
+      return res.status(400).json({
+        error: {
+          message: '`direction` must be "up", "down", or "clear"',
+          status: 400,
+        },
+      });
+    }
+
+    const post = await Post.findById(id);
+    if (!post) return notFound(res, id);
+    if (post.isLocked) {
+      return forbidden(res, "This post is locked; voting is not allowed");
+    }
+
+    const user = await getOrCreateUser(req.auth.userId);
+
+    let update;
+    if (direction === "up") {
+      update = {
+        $addToSet: { upvotes: user._id },
+        $pull: { downvotes: user._id },
+      };
+    } else if (direction === "down") {
+      update = {
+        $addToSet: { downvotes: user._id },
+        $pull: { upvotes: user._id },
+      };
+    } else {
+      update = { $pull: { upvotes: user._id, downvotes: user._id } };
+    }
+
+    const updated = await Post.findByIdAndUpdate(id, update, { new: true }).populate(
+      AUTHOR_POPULATE
+    );
+
+    res.json({
+      ...updated.toObject({ virtuals: true }),
+      // Convenience for the client so it doesn't have to re-derive.
+      userVote:
+        direction === "clear"
+          ? null
+          : direction === "up"
+            ? "up"
+            : "down",
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── Moderator actions ────────────────────────────────────────────────────
+
+/** Toggle a boolean flag on a post via a shared helper. */
+async function setPostFlag(id, field, value, res) {
+  if (!mongoose.isValidObjectId(id)) return badId(res, id);
+  const updated = await Post.findByIdAndUpdate(id, { [field]: value }, { new: true }).populate(
+    AUTHOR_POPULATE
+  );
+  if (!updated) return notFound(res, id);
+  res.json(updated.toObject({ virtuals: true }));
+}
+
+/** POST /api/posts/:id/pin — moderator only. Toggles based on current state. */
+export async function pinPost(req, res, next) {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return notFound(res, req.params.id);
+    await setPostFlag(post._id, "isPinned", !post.isPinned, res);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** POST /api/posts/:id/lock — moderator only. Toggles based on current state. */
+export async function lockPost(req, res, next) {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return notFound(res, req.params.id);
+    await setPostFlag(post._id, "isLocked", !post.isLocked, res);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** DELETE /api/posts/:id/moderate — moderator only. Deletes any post. */
+export async function moderatorDeletePost(req, res, next) {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) return badId(res, id);
+
+    const deleted = await Post.findByIdAndDelete(id);
+    if (!deleted) return notFound(res, id);
+
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}

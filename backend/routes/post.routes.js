@@ -7,12 +7,17 @@ import {
   updatePost,
   deletePost,
   getMyPosts,
+  votePost,
+  pinPost,
+  lockPost,
+  moderatorDeletePost,
 } from "../controllers/post.controller.js";
 import {
   validateCreatePost,
   validateUpdatePost,
 } from "../validators/post.validator.js";
 import { requireAuth } from "../middleware/requireAuth.js";
+import { requireModerator } from "../middleware/requireModerator.js";
 import { imagesUpload } from "../middleware/upload.js";
 import { normalizePostBody } from "../middleware/normalizePostBody.js";
 
@@ -48,5 +53,13 @@ router.put(
 );
 
 router.delete("/:id", requireAuth, deletePost);
+
+// Voting: any signed-in user.
+router.post("/:id/vote", requireAuth, votePost);
+
+// Moderator actions (pin toggle / lock toggle / delete any post).
+router.post("/:id/pin", requireAuth, requireModerator, pinPost);
+router.post("/:id/lock", requireAuth, requireModerator, lockPost);
+router.delete("/:id/moderate", requireAuth, requireModerator, moderatorDeletePost);
 
 export default router;
