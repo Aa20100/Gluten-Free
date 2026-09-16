@@ -337,3 +337,125 @@ export async function getMyPosts(getToken) {
   const headers = await getAuthHeaders(getToken);
   return request(buildUrl("/posts/me"), { headers });
 }
+
+// ── Post voting + moderation ─────────────────────────────────────────────
+
+/** POST /api/posts/:id/vote — authed. direction: "up" | "down" | "clear". */
+export async function votePost(id, direction, getToken) {
+  const headers = {
+    ...(await getAuthHeaders(getToken)),
+    "Content-Type": "application/json",
+  };
+  return request(buildUrl(`/posts/${encodeURIComponent(id)}/vote`), {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ direction }),
+  });
+}
+
+/** POST /api/posts/:id/pin — moderator only. Toggle. */
+export async function pinPost(id, getToken) {
+  const headers = await getAuthHeaders(getToken);
+  return request(buildUrl(`/posts/${encodeURIComponent(id)}/pin`), {
+    method: "POST",
+    headers,
+  });
+}
+
+/** POST /api/posts/:id/lock — moderator only. Toggle. */
+export async function lockPost(id, getToken) {
+  const headers = await getAuthHeaders(getToken);
+  return request(buildUrl(`/posts/${encodeURIComponent(id)}/lock`), {
+    method: "POST",
+    headers,
+  });
+}
+
+/** DELETE /api/posts/:id/moderate — moderator only. 204. */
+export async function moderatorDeletePost(id, getToken) {
+  const headers = await getAuthHeaders(getToken);
+  const url = buildUrl(`/posts/${encodeURIComponent(id)}/moderate`);
+  const res = await fetch(url, { method: "DELETE", headers });
+  if (!res.ok) {
+    const err = new Error(`Moderator delete failed: ${res.status} ${res.statusText}`);
+    err.status = res.status;
+    throw err;
+  }
+  return true;
+}
+
+// ── Comments ─────────────────────────────────────────────────────────────
+
+/** GET /api/comments/post/:postId — public. Flat, oldest-first. */
+export function getComments(postId) {
+  return request(buildUrl(`/comments/post/${encodeURIComponent(postId)}`));
+}
+
+/** POST /api/comments — authed. Payload: { post, body, parent? }. */
+export async function createComment(payload, getToken) {
+  const headers = {
+    ...(await getAuthHeaders(getToken)),
+    "Content-Type": "application/json",
+  };
+  return request(buildUrl("/comments"), {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+}
+
+/** PUT /api/comments/:id — authed + author only. Partial. */
+export async function updateComment(id, payload, getToken) {
+  const headers = {
+    ...(await getAuthHeaders(getToken)),
+    "Content-Type": "application/json",
+  };
+  return request(buildUrl(`/comments/${encodeURIComponent(id)}`), {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(payload),
+  });
+}
+
+/** DELETE /api/comments/:id — authed + author only. Soft-delete; returns redacted doc. */
+export async function deleteComment(id, getToken) {
+  const headers = await getAuthHeaders(getToken);
+  const url = buildUrl(`/comments/${encodeURIComponent(id)}`);
+  const res = await fetch(url, { method: "DELETE", headers });
+  if (!res.ok) {
+    const err = new Error(`Delete comment failed: ${res.status} ${res.statusText}`);
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+/** POST /api/comments/:id/like — authed. Toggle. Returns doc + likeCount + likedByMe. */
+export async function likeComment(id, getToken) {
+  const headers = await getAuthHeaders(getToken);
+  return request(buildUrl(`/comments/${encodeURIComponent(id)}/like`), {
+    method: "POST",
+    headers,
+  });
+}
+
+// ── Reports ──────────────────────────────────────────────────────────────
+
+/** POST /api/reports — authed. Payload: { targetType, targetId, reason }. */
+export async function reportContent(payload, getToken) {
+  const headers = {
+    ...(await getAuthHeaders(getToken)),
+    "Content-Type": "application/json",
+  };
+  return request(buildUrl("/reports"), {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+}
+
+/** GET /api/reports — moderator only. */
+export async function listReports(getToken) {
+  const headers = await getAuthHeaders(getToken);
+  return request(buildUrl("/reports"), { headers });
+}
