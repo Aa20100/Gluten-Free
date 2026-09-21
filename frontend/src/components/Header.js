@@ -80,19 +80,19 @@ export default function Header() {
           {isSignedIn && isModerator && (
             <>
               <Link
-                href="/restaurants/new"
+                href="/moderation/restaurants/manage"
                 className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-900 hover:bg-amber-200"
-                title="Moderator: add a restaurant directly"
+                title="Moderator: manage restaurants (edit, delete, add)"
               >
-                <span aria-hidden="true">＋</span>
-                Add
+                <span aria-hidden="true">📋</span>
+                Manage restaurants
               </Link>
               <Link
                 href="/moderation/restaurants"
                 className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-900 hover:bg-amber-200"
                 title="Moderator tools"
               >
-                <span aria-hidden="true">🍽</span>
+                <span aria-hidden="true">⏳</span>
                 Pending
               </Link>
               <Link
