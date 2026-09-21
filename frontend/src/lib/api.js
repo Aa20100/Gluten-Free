@@ -160,31 +160,74 @@ export async function getMyReviews(getToken) {
   return request(buildUrl("/reviews/me"), { headers });
 }
 
-/** POST /api/reviews → the created Review, populated. */
-export async function createReview(getToken, { restaurant, rating, text }) {
-  const headers = {
-    ...(await getAuthHeaders(getToken)),
-    "Content-Type": "application/json",
-  };
+/**
+ * Turn a review payload into a multipart FormData body. Mirrors the post
+ * helper (see postToFormData above) — files go under `images`,
+ * `imageUrls` (URLs kept from a previous edit) is JSON-stringified so
+ * the backend's normalizeMultipartBody can re-parse it before the
+ * validator runs.
+ */
+function reviewToFormData({ restaurant, rating, text, imageUrls, files }) {
+  const form = new FormData();
+  if (restaurant !== undefined) form.append("restaurant", restaurant);
+  if (rating !== undefined) form.append("rating", String(rating));
+  if (text !== undefined) form.append("text", text);
+  if (Array.isArray(imageUrls)) form.append("imageUrls", JSON.stringify(imageUrls));
+  for (const file of files || []) form.append("images", file, file.name);
+  return form;
+}
+
+/**
+ * POST /api/reviews — authed. Payload may include `files: File[]`; when
+ * present, the request is sent as multipart/form-data. Otherwise JSON.
+ */
+export async function createReview(getToken, payload) {
+  const hasFiles = Array.isArray(payload.files) && payload.files.length > 0;
+  const authHeaders = await getAuthHeaders(getToken);
+
+  if (hasFiles) {
+    return requestForm(buildUrl("/reviews"), {
+      method: "POST",
+      headers: authHeaders,
+      body: reviewToFormData(payload),
+    });
+  }
+
+  // JSON path — build the body from the fields we recognize, so
+  // stray keys (like `files: []` when the caller always sets it) don't
+  // leak through.
+  const body = {};
+  for (const key of ["restaurant", "rating", "text", "imageUrls"]) {
+    if (payload[key] !== undefined) body[key] = payload[key];
+  }
   return request(buildUrl("/reviews"), {
     method: "POST",
-    headers,
-    body: JSON.stringify({ restaurant, rating, text }),
+    headers: { ...authHeaders, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
 }
 
-/** PUT /api/reviews/:id → the updated Review, populated. */
-export async function updateReview(getToken, id, { rating, text }) {
-  const headers = {
-    ...(await getAuthHeaders(getToken)),
-    "Content-Type": "application/json",
-  };
+/** PUT /api/reviews/:id — authed. Partial. Same JSON-or-multipart rule. */
+export async function updateReview(getToken, id, payload) {
+  const hasFiles = Array.isArray(payload.files) && payload.files.length > 0;
+  const authHeaders = await getAuthHeaders(getToken);
+  const url = buildUrl(`/reviews/${encodeURIComponent(id)}`);
+
+  if (hasFiles) {
+    return requestForm(url, {
+      method: "PUT",
+      headers: authHeaders,
+      body: reviewToFormData(payload),
+    });
+  }
+
   const body = {};
-  if (rating !== undefined) body.rating = rating;
-  if (text !== undefined) body.text = text;
-  return request(buildUrl(`/reviews/${encodeURIComponent(id)}`), {
+  for (const key of ["rating", "text", "imageUrls"]) {
+    if (payload[key] !== undefined) body[key] = payload[key];
+  }
+  return request(url, {
     method: "PUT",
-    headers,
+    headers: { ...authHeaders, "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 }

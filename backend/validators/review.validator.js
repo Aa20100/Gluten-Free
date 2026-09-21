@@ -1,6 +1,7 @@
 const isString = (v) => typeof v === "string";
 const isNonEmptyString = (v) => isString(v) && v.trim().length > 0;
 const isNumber = (v) => typeof v === "number" && Number.isFinite(v);
+const isArrayOfStrings = (v) => Array.isArray(v) && v.every(isString);
 
 /**
  * Validate a review payload. `isCreate` controls whether required-field
@@ -35,6 +36,15 @@ function validatePayload(payload, { isCreate }) {
   // restaurant id (create-only — updates don't reassign the restaurant)
   if (isCreate && !isNonEmptyString(payload.restaurant)) {
     errors.push("`restaurant` (restaurant id) is required");
+  }
+
+  // imageUrls (optional, cap 5)
+  if ("imageUrls" in payload) {
+    if (!isArrayOfStrings(payload.imageUrls)) {
+      errors.push("`imageUrls` must be an array of strings");
+    } else if (payload.imageUrls.length > 5) {
+      errors.push("`imageUrls` may contain at most 5 items");
+    }
   }
 
   return errors;

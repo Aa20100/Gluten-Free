@@ -80,7 +80,10 @@ const restaurantSchema = new Schema(
     location: { type: locationSchema, default: undefined },
     phone: { type: String },
     website: { type: String },
-    imageUrl: { type: String },
+    // Cloudinary secure_urls. The first image is treated as the hero on
+    // detail pages; the rest render as a thumbnail row. Validators cap
+    // this at 5 items per doc.
+    imageUrls: { type: [String], default: [] },
     cuisine: { type: [String], default: [] },
     restaurantType: {
       type: [String],

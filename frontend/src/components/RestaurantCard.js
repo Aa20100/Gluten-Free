@@ -31,22 +31,25 @@ function formatLocation(address) {
 export default function RestaurantCard({ restaurant }) {
   if (!restaurant) return null;
 
-  const { _id, name, address, imageUrl, features } = restaurant;
+  const { _id, name, address, imageUrls, features } = restaurant;
   const location = formatLocation(address);
   const tags = buildFeatureTags(features);
+  // Cards only show a single hero — the first image from the gallery. The
+  // rest render on the detail page.
+  const heroImage = Array.isArray(imageUrls) ? imageUrls[0] : null;
 
   return (
     <Link
       href={`/restaurants/${_id}`}
       className="flex flex-col overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
     >
-      {imageUrl ? (
-        // Placeholder images from the seed live on example.com; using a plain
-        // <img> here keeps things simple and avoids next/image remotePatterns
-        // config for arbitrary hosts. Swap for <Image /> later.
+      {heroImage ? (
+        // Plain <img> keeps things simple and avoids configuring
+        // next/image remotePatterns for arbitrary hosts. Swap for
+        // <Image /> later.
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={imageUrl}
+          src={heroImage}
           alt={name}
           className="h-40 w-full object-cover"
           onError={(e) => {

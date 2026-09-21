@@ -26,6 +26,10 @@ const reviewSchema = new Schema(
       required: true,
       trim: true,
     },
+
+    // Cloudinary secure_urls attached by the reviewer. Validators cap
+    // this at 5 items per doc.
+    imageUrls: { type: [String], default: [] },
   },
   { timestamps: true }
 );

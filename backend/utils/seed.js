@@ -11,17 +11,74 @@ import mongoose from "mongoose";
 import { connectDB } from "../config/db.js";
 import Restaurant from "../models/restaurant.model.js";
 
+/**
+ * Realistic Unsplash food photos, grouped by vibe. Each restaurant in the
+ * seed cherry-picks 1–3 of these to fill its `imageUrls`. Using public
+ * Unsplash CDN URLs so we don't hit our own Cloudinary quota for demo data.
+ */
+const IMAGES = {
+  bakery: [
+    "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800",
+    "https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=800",
+    "https://images.unsplash.com/photo-1608198093002-ad4e005484ec?w=800",
+  ],
+  pastry: [
+    "https://images.unsplash.com/photo-1587248720327-8eb72564be1e?w=800",
+    "https://images.unsplash.com/photo-1550617931-e17a7b70dce2?w=800",
+  ],
+  cafe: [
+    "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800",
+    "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800",
+  ],
+  breakfast: [
+    "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=800",
+    "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800",
+  ],
+  pizza: [
+    "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",
+    "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800",
+  ],
+  brewery: [
+    "https://images.unsplash.com/photo-1436076863939-06870fe779c2?w=800",
+    "https://images.unsplash.com/photo-1546854860-30f31c8c5b2f?w=800",
+  ],
+  tacos: [
+    "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800",
+    "https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?w=800",
+  ],
+  finedining: [
+    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800",
+    "https://images.unsplash.com/photo-1544025162-d76694265947?w=800",
+  ],
+  vegan: [
+    "https://images.unsplash.com/photo-1543353071-10c8ba85a904?w=800",
+    "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800",
+  ],
+  juice: [
+    "https://images.unsplash.com/photo-1622597467836-f3285f2131b8?w=800",
+    "https://images.unsplash.com/photo-1610970881699-44a5587cabec?w=800",
+  ],
+  comfort: [
+    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800",
+    "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800",
+  ],
+  american: [
+    "https://images.unsplash.com/photo-1544025162-d76694265947?w=800",
+    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800",
+  ],
+};
+
 const SAMPLE_RESTAURANTS = [
   // ── Austin, TX ─────────────────────────────────────────────────────────
   {
     name: "Wildwood Bakehouse",
+    imageUrls: [IMAGES.bakery[0], IMAGES.breakfast[1]],
     description:
       "Dedicated gluten-free bakery and breakfast spot serving sourdough boules, kolaches, and breakfast tacos on GF flour tortillas.",
     address: { street: "3016 Guadalupe St", city: "Austin", state: "TX", zip: "78705", country: "USA" },
     location: { type: "Point", coordinates: [-97.7419, 30.2969] },
     phone: "(512) 555-0148",
     website: "https://example.com/wildwood-bakehouse",
-    imageUrl: "https://images.example.com/wildwood.jpg",
     cuisine: ["American", "Bakery"],
     restaurantType: ["breakfast", "bakery"],
     dietary: { glutenFree: true, dairyFree: true, vegetarian: true, nutFree: true },
@@ -36,6 +93,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Torchy's on Barton Springs",
+    imageUrls: [IMAGES.tacos[0], IMAGES.tacos[1]],
     description:
       "Beloved local taco chain with a labeled GF menu and separate prep procedures for corn tortilla orders.",
     address: { street: "1311 S Congress Ave", city: "Austin", state: "TX", zip: "78704", country: "USA" },
@@ -49,6 +107,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Verde Vine Wine Bar",
+    imageUrls: [IMAGES.finedining[0], IMAGES.finedining[1]],
     description:
       "Wine-forward small plates spot with a chef who trained in celiac-safe kitchens; most menu is GF by design.",
     address: { street: "2400 E Cesar Chavez St", city: "Austin", state: "TX", zip: "78702", country: "USA" },
@@ -66,6 +125,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Bouldin Creek Cafe",
+    imageUrls: [IMAGES.cafe[0], IMAGES.vegan[0]],
     description:
       "Vegetarian/vegan cafe with clearly marked GF options and separate fryer for GF items.",
     address: { street: "1900 S 1st St", city: "Austin", state: "TX", zip: "78704", country: "USA" },
@@ -80,6 +140,7 @@ const SAMPLE_RESTAURANTS = [
   // ── Portland, OR ───────────────────────────────────────────────────────
   {
     name: "Petunia's Pies & Pastries",
+    imageUrls: [IMAGES.pastry[0], IMAGES.pastry[1], IMAGES.bakery[2]],
     description:
       "100% gluten-free and vegan bakery; every cake, cupcake, and pie is celiac-safe.",
     address: { street: "610 SW 12th Ave", city: "Portland", state: "OR", zip: "97205", country: "USA" },
@@ -100,6 +161,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Ground Breaker Brewing",
+    imageUrls: [IMAGES.brewery[0], IMAGES.brewery[1]],
     description:
       "Dedicated gluten-free brewery and pub with a fully GF kitchen; famous for their IPA and GF pretzels.",
     address: { street: "2030 SE 7th Ave", city: "Portland", state: "OR", zip: "97214", country: "USA" },
@@ -120,6 +182,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Kure Juice Bar",
+    imageUrls: [IMAGES.juice[0], IMAGES.juice[1]],
     description:
       "Cold-pressed juices, smoothie bowls, and grain-free bites — everything on the menu is GF.",
     address: { street: "408 SW 12th Ave", city: "Portland", state: "OR", zip: "97205", country: "USA" },
@@ -142,6 +205,7 @@ const SAMPLE_RESTAURANTS = [
   // ── Denver, CO ─────────────────────────────────────────────────────────
   {
     name: "Just Be Kitchen",
+    imageUrls: [IMAGES.comfort[0], IMAGES.breakfast[0]],
     description:
       "100% gluten-free, grain-free, and refined-sugar-free comfort food — even the cinnamon rolls are safe.",
     address: { street: "2364 15th St", city: "Denver", state: "CO", zip: "80202", country: "USA" },
@@ -167,6 +231,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Beau Jo's Pizza",
+    imageUrls: [IMAGES.pizza[0], IMAGES.pizza[1]],
     description:
       "Colorado mountain-style pie shop with a dedicated GF crust program and separate prep area.",
     address: { street: "2710 S Colorado Blvd", city: "Denver", state: "CO", zip: "80222", country: "USA" },
@@ -183,6 +248,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Watercourse Foods",
+    imageUrls: [IMAGES.vegan[0], IMAGES.vegan[1]],
     description:
       "Long-running plant-based restaurant with clear GF labeling and a dedicated GF menu.",
     address: { street: "837 E 17th Ave", city: "Denver", state: "CO", zip: "80218", country: "USA" },
@@ -197,6 +263,7 @@ const SAMPLE_RESTAURANTS = [
   // ── Chicago, IL ────────────────────────────────────────────────────────
   {
     name: "Wheat's End Cafe",
+    imageUrls: [IMAGES.cafe[0], IMAGES.bakery[1], IMAGES.pastry[0]],
     description:
       "Dedicated GF cafe and bakery in Lincoln Park — sandwiches, cinnamon buns, and cakes.",
     address: { street: "2873 N Broadway St", city: "Chicago", state: "IL", zip: "60657", country: "USA" },
@@ -217,6 +284,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Da Luciano",
+    imageUrls: [IMAGES.pizza[1], IMAGES.finedining[0]],
     description:
       "Italian-American spot with a dedicated GF pizza oven and pasta line — a local celiac institution.",
     address: { street: "22 S Riverside Plaza", city: "Chicago", state: "IL", zip: "60606", country: "USA" },
@@ -236,6 +304,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Defloured Bakery",
+    imageUrls: [IMAGES.bakery[0], IMAGES.pastry[1]],
     description:
       "100% gluten-free, dairy-free, soy-free bakery selling cakes, pies, and rotating dessert flights.",
     address: { street: "1477 W Balmoral Ave", city: "Chicago", state: "IL", zip: "60640", country: "USA" },
@@ -256,6 +325,7 @@ const SAMPLE_RESTAURANTS = [
   // ── New York, NY ───────────────────────────────────────────────────────
   {
     name: "Senza Gluten",
+    imageUrls: [IMAGES.finedining[1], IMAGES.pizza[0]],
     description:
       "West Village Italian restaurant with an entirely gluten-free menu — pastas, pizzas, and desserts.",
     address: { street: "206 Sullivan St", city: "New York", state: "NY", zip: "10012", country: "USA" },
@@ -277,6 +347,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Modern Bread and Bagel",
+    imageUrls: [IMAGES.bakery[2], IMAGES.breakfast[1]],
     description:
       "100% GF bakery cranking out bagels, challah, and pastries indistinguishable from the real thing.",
     address: { street: "472 Columbus Ave", city: "New York", state: "NY", zip: "10024", country: "USA" },
@@ -295,6 +366,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Friedman's Chelsea Market",
+    imageUrls: [IMAGES.american[1], IMAGES.breakfast[0]],
     description:
       "Casual American with clear GF labeling and a separate fryer — great for a safe brunch.",
     address: { street: "75 9th Ave", city: "New York", state: "NY", zip: "10011", country: "USA" },
@@ -314,6 +386,7 @@ const SAMPLE_RESTAURANTS = [
   // ── San Francisco, CA ──────────────────────────────────────────────────
   {
     name: "Mariposa Baking Co.",
+    imageUrls: [IMAGES.bakery[1], IMAGES.pastry[0], IMAGES.cafe[1]],
     description:
       "Certified gluten-free bakery in the Ferry Building; breads, sandwiches, and cakes.",
     address: { street: "1 Ferry Building, Shop 25", city: "San Francisco", state: "CA", zip: "94111", country: "USA" },
@@ -333,6 +406,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Nourish Cafe",
+    imageUrls: [IMAGES.vegan[1], IMAGES.juice[0]],
     description:
       "All-vegan, mostly-GF cafe with grain bowls and smoothies; clearly labeled cross-contact protocols.",
     address: { street: "189 6th Ave", city: "San Francisco", state: "CA", zip: "94118", country: "USA" },
@@ -349,6 +423,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Little Gem",
+    imageUrls: [IMAGES.cafe[0], IMAGES.vegan[0], IMAGES.breakfast[1]],
     description:
       "Whole-foods-driven cafe where every dish is GF, dairy-free, and refined-sugar-free by default.",
     address: { street: "400 Grove St", city: "San Francisco", state: "CA", zip: "94102", country: "USA" },
@@ -374,6 +449,7 @@ const SAMPLE_RESTAURANTS = [
   // ── Plainsboro / Princeton, NJ ─────────────────────────────────────────
   {
     name: "Millstone Bakery",
+    imageUrls: [IMAGES.bakery[0], IMAGES.pastry[1], IMAGES.breakfast[0]],
     description:
       "Dedicated gluten-free bakery in Plainsboro Village Center — challah, bagels, and layered cakes, plus a small brunch menu on weekends.",
     address: {
@@ -400,6 +476,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Nassau Street Kitchen",
+    imageUrls: [IMAGES.american[0], IMAGES.finedining[1]],
     description:
       "Modern American restaurant a few blocks off the Princeton campus with a clearly marked GF menu and a dedicated fryer.",
     address: {
@@ -424,6 +501,7 @@ const SAMPLE_RESTAURANTS = [
   },
   {
     name: "Ridge Road Cafe",
+    imageUrls: [IMAGES.breakfast[0], IMAGES.cafe[1]],
     description:
       "West Windsor breakfast and brunch spot with an all-day GF pancake, waffle, and eggs-benedict menu. Kid-friendly, right by Princeton Junction station.",
     address: {

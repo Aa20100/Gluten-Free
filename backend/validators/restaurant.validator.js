@@ -62,8 +62,12 @@ function validatePayload(payload, { isCreate }) {
   if ("website" in payload && !isString(payload.website)) {
     errors.push("`website` must be a string");
   }
-  if ("imageUrl" in payload && !isString(payload.imageUrl)) {
-    errors.push("`imageUrl` must be a string");
+  if ("imageUrls" in payload) {
+    if (!isArrayOfStrings(payload.imageUrls)) {
+      errors.push("`imageUrls` must be an array of strings");
+    } else if (payload.imageUrls.length > 5) {
+      errors.push("`imageUrls` may contain at most 5 items");
+    }
   }
 
   if ("address" in payload) {

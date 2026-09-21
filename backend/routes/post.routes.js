@@ -19,7 +19,7 @@ import {
 import { requireAuth } from "../middleware/requireAuth.js";
 import { requireModerator } from "../middleware/requireModerator.js";
 import { imagesUpload } from "../middleware/upload.js";
-import { normalizePostBody } from "../middleware/normalizePostBody.js";
+import { normalizeMultipartBody } from "../middleware/normalizeMultipartBody.js";
 
 const router = Router();
 
@@ -39,7 +39,7 @@ router.post(
   "/",
   requireAuth,
   imagesUpload,
-  normalizePostBody,
+  normalizeMultipartBody,
   validateCreatePost,
   createPost
 );
@@ -47,7 +47,7 @@ router.put(
   "/:id",
   requireAuth,
   imagesUpload,
-  normalizePostBody,
+  normalizeMultipartBody,
   validateUpdatePost,
   updatePost
 );

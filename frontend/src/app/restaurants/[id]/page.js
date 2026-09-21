@@ -7,6 +7,7 @@ import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import StarRating from "@/components/StarRating";
+import CloudinaryUploader from "@/components/CloudinaryUploader";
 import {
   getRestaurantById,
   getReviewsForRestaurant,
@@ -286,7 +287,7 @@ function RestaurantDetail({
     address,
     phone,
     website,
-    imageUrl,
+    imageUrls = [],
     cuisine = [],
     restaurantType = [],
     dietary,
@@ -309,20 +310,9 @@ function RestaurantDetail({
 
   return (
     <>
-      {/* Hero */}
+      {/* Hero — gallery when we have images, plate emoji as fallback. */}
       <div className="mt-4 overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm">
-        {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={imageUrl}
-            alt={name}
-            className="h-56 w-full object-cover sm:h-72"
-          />
-        ) : (
-          <div className="flex h-56 items-center justify-center bg-gradient-to-br from-orange-100 to-amber-100 text-6xl sm:h-72">
-            🍽️
-          </div>
-        )}
+        <RestaurantGallery imageUrls={imageUrls} alt={name} />
 
         <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start sm:justify-between sm:p-8">
           <div className="min-w-0">
@@ -604,6 +594,7 @@ function ReviewsSection({
 }
 
 function ReviewItem({ review }) {
+  const images = Array.isArray(review.imageUrls) ? review.imageUrls : [];
   return (
     <li className="rounded-xl border border-orange-100 bg-amber-50/60 p-4">
       <div className="flex items-baseline justify-between gap-3">
@@ -616,6 +607,28 @@ function ReviewItem({ review }) {
         <span className="text-xs text-stone-500">{relativeDate(review.createdAt)}</span>
       </div>
       <p className="mt-2 whitespace-pre-line text-stone-800">{review.text}</p>
+      {images.length > 0 && (
+        <ul className="mt-3 flex flex-wrap gap-2">
+          {images.map((url, i) => (
+            <li key={url}>
+              {/* Small thumbnail; opens the full image in a new tab. */}
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={url}
+                  alt={`Review image ${i + 1}`}
+                  className="h-20 w-20 rounded-lg border border-stone-200 object-cover transition-opacity hover:opacity-90"
+                />
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
     </li>
   );
 }
@@ -623,12 +636,26 @@ function ReviewItem({ review }) {
 function MyReviewForm({ existing, restaurantId, getToken, onSaved, onDeleted }) {
   const [rating, setRating] = useState(existing?.rating || 0);
   const [text, setText] = useState(existing?.text || "");
+  // Existing already-uploaded images the reviewer wants to KEEP. The user
+  // removes items by clicking ✕; the ones left get sent back as
+  // `imageUrls` so the backend knows to preserve them (any new files
+  // append after).
+  const [keptUrls, setKeptUrls] = useState(existing?.imageUrls || []);
+  const [newFiles, setNewFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
   const isEditing = Boolean(existing);
+  const totalImages = keptUrls.length + newFiles.length;
+  const canAddMore = totalImages < 5;
 
   const canSubmit = rating >= 1 && rating <= 5 && text.trim().length > 0 && !submitting;
+
+  const removeKept = (idx) => {
+    const next = keptUrls.slice();
+    next.splice(idx, 1);
+    setKeptUrls(next);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -636,10 +663,23 @@ function MyReviewForm({ existing, restaurantId, getToken, onSaved, onDeleted }) 
     setSubmitting(true);
     setError(null);
     try {
+      const payload = {
+        rating,
+        text: text.trim(),
+        files: newFiles,
+      };
+      // On edit we always send imageUrls (may be []) so the backend
+      // treats it as the KEPT set; on create we only send it if we have
+      // pre-existing URLs (rare) — leaving it undefined lets the backend
+      // treat the request as brand-new + uploads only.
+      if (isEditing || keptUrls.length > 0) payload.imageUrls = keptUrls;
+
       const saved = isEditing
-        ? await updateReview(getToken, existing._id, { rating, text: text.trim() })
-        : await createReview(getToken, { restaurant: restaurantId, rating, text: text.trim() });
+        ? await updateReview(getToken, existing._id, payload)
+        : await createReview(getToken, { restaurant: restaurantId, ...payload });
       onSaved(saved);
+      // Clear the picker after a successful save so the previews go away.
+      setNewFiles([]);
     } catch (err) {
       setError(err);
     } finally {
@@ -657,6 +697,8 @@ function MyReviewForm({ existing, restaurantId, getToken, onSaved, onDeleted }) 
       onDeleted();
       setRating(0);
       setText("");
+      setKeptUrls([]);
+      setNewFiles([]);
     } catch (err) {
       setError(err);
     } finally {
@@ -704,6 +746,53 @@ function MyReviewForm({ existing, restaurantId, getToken, onSaved, onDeleted }) 
         />
       </label>
 
+      {/* Kept images from a prior save — each removable. */}
+      {keptUrls.length > 0 && (
+        <div className="mt-3">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-500">
+            Current images
+          </p>
+          <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {keptUrls.map((url, i) => (
+              <li key={url} className="group relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={url}
+                  alt={`Kept image ${i + 1}`}
+                  className="h-20 w-full rounded-lg border border-stone-200 object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeKept(i)}
+                  aria-label={`Remove image ${i + 1}`}
+                  className="absolute right-1 top-1 rounded-full bg-black/60 px-2 py-0.5 text-xs font-bold text-white opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* New file picker — capped so kept + new ≤ 5. */}
+      <div className="mt-3">
+        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-500">
+          Add photos {totalImages > 0 && `(${totalImages}/5)`}
+        </p>
+        {canAddMore ? (
+          <CloudinaryUploader
+            files={newFiles}
+            onChange={setNewFiles}
+            maxFiles={5 - keptUrls.length}
+          />
+        ) : (
+          <p className="text-xs text-stone-500">
+            Maximum 5 images. Remove one above to add another.
+          </p>
+        )}
+      </div>
+
       {error && (
         <p className="mt-2 text-sm text-red-700">
           {error.message || "Something went wrong."}
@@ -720,6 +809,67 @@ function MyReviewForm({ existing, restaurantId, getToken, onSaved, onDeleted }) 
         </button>
       </div>
     </form>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Restaurant gallery — hero image + thumbnail row (click to swap)
+// ────────────────────────────────────────────────────────────────────────
+
+function RestaurantGallery({ imageUrls, alt }) {
+  const images = Array.isArray(imageUrls) ? imageUrls.filter(Boolean) : [];
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  if (images.length === 0) {
+    return (
+      <div className="flex h-56 items-center justify-center bg-gradient-to-br from-orange-100 to-amber-100 text-6xl sm:h-72">
+        🍽️
+      </div>
+    );
+  }
+
+  const safeIdx = Math.min(activeIdx, images.length - 1);
+  const hero = images[safeIdx];
+
+  return (
+    <div>
+      {/* Hero */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={hero}
+        alt={alt}
+        className="h-56 w-full object-cover sm:h-72"
+      />
+      {/* Thumbnail row — only when there's more than one image. */}
+      {images.length > 1 && (
+        <ul className="flex gap-2 overflow-x-auto p-3">
+          {images.map((url, i) => {
+            const active = i === safeIdx;
+            return (
+              <li key={url}>
+                <button
+                  type="button"
+                  onClick={() => setActiveIdx(i)}
+                  aria-label={`Show image ${i + 1}`}
+                  aria-pressed={active}
+                  className={
+                    "block h-16 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-colors " +
+                    (active ? "border-orange-500" : "border-transparent hover:border-orange-200")
+                  }
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt={`${alt} — thumbnail ${i + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }
 

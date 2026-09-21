@@ -4,6 +4,7 @@ import Review from "../models/review.model.js";
 import Restaurant from "../models/restaurant.model.js";
 import { getOrCreateUser } from "../utils/getOrCreateUser.js";
 import { recomputeRestaurantRating } from "../utils/recomputeRestaurantRating.js";
+import { uploadFilesToCloudinary } from "../utils/uploadToCloudinary.js";
 
 // ────────────────────────────────────────────────────────────────────────────
 // Small helpers
@@ -53,16 +54,26 @@ export async function getReviewsForRestaurant(req, res, next) {
   }
 }
 
-/** POST /api/reviews  — protected */
+/**
+ * POST /api/reviews — protected. Accepts either JSON or multipart.
+ * When multipart, image files arrive on req.files and get uploaded to
+ * Cloudinary here; the resulting URLs are prepended to any `imageUrls`
+ * in the body (rare — mostly for feature parity with posts).
+ */
 export async function createReview(req, res, next) {
   try {
-    const { restaurant, rating, text } = req.body;
+    const { restaurant, rating, text, imageUrls = [] } = req.body;
 
     if (!mongoose.isValidObjectId(restaurant)) return badId(res, restaurant);
 
-    // Confirm the restaurant exists before we write anything.
+    // Confirm the restaurant exists before we write anything (or upload).
     const restaurantDoc = await Restaurant.findById(restaurant);
     if (!restaurantDoc) return notFound(res, "Restaurant", restaurant);
+
+    // Upload any freshly-picked files. Prepending them keeps display
+    // order intuitive (newest picks first).
+    const uploadedUrls = await uploadFilesToCloudinary(req.files);
+    const finalImageUrls = [...uploadedUrls, ...imageUrls];
 
     // Map the Clerk user to our DB user (auto-creates on first hit).
     const user = await getOrCreateUser(req.auth.userId);
@@ -74,6 +85,7 @@ export async function createReview(req, res, next) {
         restaurant,
         rating,
         text,
+        imageUrls: finalImageUrls,
       });
     } catch (err) {
       // Compound-unique violation: this user already reviewed this
@@ -120,6 +132,18 @@ export async function updateReview(req, res, next) {
     // already ensured any sent values are well-formed.
     if ("rating" in req.body) review.rating = req.body.rating;
     if ("text" in req.body) review.text = req.body.text;
+
+    // Image handling — mirrors the post controller:
+    //   - New file uploads (req.files) push their Cloudinary URLs.
+    //   - Sending `imageUrls` = "the URLs I want to keep" (client already
+    //     removed any it dropped). New uploads append to that kept set.
+    //   - If neither is present, leave existing imageUrls alone.
+    const uploadedUrls = await uploadFilesToCloudinary(req.files);
+    const clientSentImageUrls = "imageUrls" in req.body;
+    if (clientSentImageUrls || uploadedUrls.length > 0) {
+      const kept = clientSentImageUrls ? req.body.imageUrls : review.imageUrls;
+      review.imageUrls = [...(kept || []), ...uploadedUrls];
+    }
 
     await review.save();
     await recomputeRestaurantRating(review.restaurant);
