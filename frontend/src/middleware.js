@@ -14,6 +14,7 @@ const isProtectedRoute = createRouteMatcher([
   "/forum/new(.*)", // create a new post
   "/forum/(.*)/comment(.*)", // post a comment (Class 10)
   "/moderation(.*)", // moderator tools — role check is client-side + API-side
+  "/restaurants/suggest(.*)", // any signed-in user can suggest a restaurant
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

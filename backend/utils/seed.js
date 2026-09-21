@@ -538,7 +538,15 @@ async function main() {
   await Restaurant.deleteMany({});
 
   console.log(`[seed] Inserting ${SAMPLE_RESTAURANTS.length} sample restaurants...`);
-  const inserted = await Restaurant.insertMany(SAMPLE_RESTAURANTS);
+  // Seed rows are curated by hand, so they enter the public listing
+  // right away — status: "approved". The user-suggestion workflow
+  // (Class 12) is what stamps rows as "pending".
+  const withDefaults = SAMPLE_RESTAURANTS.map((r) => ({
+    ...r,
+    status: "approved",
+    source: "manual",
+  }));
+  const inserted = await Restaurant.insertMany(withDefaults);
   console.log(`[seed] Inserted ${inserted.length} restaurants.`);
 }
 

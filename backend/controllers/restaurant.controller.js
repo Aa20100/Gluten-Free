@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import Restaurant from "../models/restaurant.model.js";
+import { getOrCreateUser } from "../utils/getOrCreateUser.js";
+import { uploadFilesToCloudinary } from "../utils/uploadToCloudinary.js";
 
 /**
  * Escape a user-supplied string so it can be safely embedded in a RegExp
@@ -87,7 +89,9 @@ export async function getAllRestaurants(req, res, next) {
       radius,
     } = req.query;
 
-    const filter = {};
+    // Public listing only shows approved restaurants; pending / rejected
+    // suggestions are gated behind moderator-only endpoints.
+    const filter = { status: "approved" };
 
     // ── Text filters ────────────────────────────────────────────────────
     // `name` and `city` are case-insensitive substring matches so users can
@@ -216,6 +220,121 @@ export async function deleteRestaurant(req, res, next) {
     if (!restaurant) return notFound(res, id);
 
     res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── Suggestion workflow ──────────────────────────────────────────────────
+
+// Fields a user-suggested restaurant can carry. Anything else on the body
+// (status, source, submittedBy, averageRating, reviewCount, etc.) is
+// ignored — we never trust the client to set those.
+const ALLOWED_SUGGEST_FIELDS = [
+  "name",
+  "description",
+  "address",
+  "location",
+  "phone",
+  "website",
+  "cuisine",
+  "restaurantType",
+  "dietary",
+  "features",
+  "imageUrls",
+];
+
+/**
+ * POST /api/restaurants/suggest — protected.
+ *
+ * Any signed-in user can submit a new restaurant. Suggestions land as
+ * `status: "pending"` with `source: "user_suggested"` and a
+ * `submittedBy` back-reference, and stay out of `GET /api/restaurants`
+ * until a moderator approves them.
+ *
+ * Accepts JSON or multipart (image files ride on `images`, uploaded to
+ * Cloudinary here). Any `imageUrls` in the body (already-hosted URLs) are
+ * appended AFTER freshly-uploaded ones.
+ */
+export async function suggestRestaurant(req, res, next) {
+  try {
+    const user = await getOrCreateUser(req.auth.userId);
+
+    // Pluck only allowed fields — never trust status/source/etc. from body.
+    const payload = {};
+    for (const key of ALLOWED_SUGGEST_FIELDS) {
+      if (key in req.body) payload[key] = req.body[key];
+    }
+
+    const uploadedUrls = await uploadFilesToCloudinary(req.files);
+    payload.imageUrls = [
+      ...uploadedUrls,
+      ...(Array.isArray(payload.imageUrls) ? payload.imageUrls : []),
+    ];
+
+    const created = await Restaurant.create({
+      ...payload,
+      status: "pending",
+      source: "user_suggested",
+      submittedBy: user._id,
+    });
+
+    res.status(201).json(created);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** GET /api/restaurants/pending — moderator only. Newest first. */
+export async function listPendingRestaurants(_req, res, next) {
+  try {
+    const pending = await Restaurant.find({ status: "pending" })
+      .sort({ createdAt: -1 })
+      .populate({ path: "submittedBy", select: "name email" });
+
+    res.json(pending);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** POST /api/restaurants/:id/approve — moderator only. */
+export async function approveRestaurant(req, res, next) {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) return badId(res, id);
+
+    const updated = await Restaurant.findByIdAndUpdate(
+      id,
+      { status: "approved" },
+      { new: true }
+    );
+    if (!updated) return notFound(res, id);
+
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/restaurants/:id/reject — moderator only.
+ * We keep the doc rather than delete it — lets us show the submitter it
+ * was declined and lets a mod reverse the call later.
+ */
+export async function rejectRestaurant(req, res, next) {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) return badId(res, id);
+
+    const updated = await Restaurant.findByIdAndUpdate(
+      id,
+      { status: "rejected" },
+      { new: true }
+    );
+    if (!updated) return notFound(res, id);
+
+    res.json(updated);
   } catch (err) {
     next(err);
   }

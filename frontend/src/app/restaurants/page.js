@@ -7,6 +7,11 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RestaurantCard from "@/components/RestaurantCard";
 import { getRestaurants } from "@/lib/api";
+import {
+  RESTAURANT_TYPE_OPTIONS,
+  DIETARY_OPTIONS,
+  FEATURE_OPTIONS,
+} from "@/lib/restaurantOptions";
 
 // ────────────────────────────────────────────────────────────────────────────
 // URL / filter model
@@ -31,46 +36,12 @@ const DEFAULT_GEO_RADIUS_KM = 25;
  */
 const CORE_DIETARY_FLAG = "glutenFree";
 
-/** URL value → human label, for each checkbox in each category section. */
-const RESTAURANT_TYPE_OPTIONS = [
-  { value: "breakfast", label: "Breakfast" },
-  { value: "lunch", label: "Lunch" },
-  { value: "dinner", label: "Dinner" },
-  { value: "bakery", label: "Bakery" },
-  { value: "coffee_shop", label: "Coffee Shop" },
-  { value: "fast_food", label: "Fast Food" },
-  { value: "dessert", label: "Dessert" },
-  { value: "fine_dining", label: "Fine Dining" },
-];
-
-const DIETARY_OPTIONS = [
-  { value: "glutenFree", label: "Gluten Free" },
-  { value: "dairyFree", label: "Dairy Free" },
-  { value: "eggFree", label: "Egg Free" },
-  { value: "nutFree", label: "Nut Free" },
-  { value: "peanutFree", label: "Peanut Free" },
-  { value: "treeNutFree", label: "Tree Nut Free" },
-  { value: "soyFree", label: "Soy Free" },
-  { value: "vegetarian", label: "Vegetarian" },
-  { value: "vegan", label: "Vegan" },
-  { value: "halal", label: "Halal" },
-  { value: "kosher", label: "Kosher" },
-  { value: "shellfishFree", label: "Shellfish Free" },
-  { value: "sesameFree", label: "Sesame Free" },
-];
-
-const FEATURE_OPTIONS = [
-  { value: "dedicatedGfKitchen", label: "Dedicated GF Kitchen" },
-  { value: "separateFryer", label: "Separate Fryer" },
-  { value: "gfMenu", label: "GF Menu" },
-  { value: "gfDesserts", label: "GF Desserts" },
-  { value: "certifiedGlutenFree", label: "Certified Gluten Free" },
-  { value: "staffTrainedForCeliac", label: "Staff Trained for Celiac" },
-  {
-    value: "crossContaminationPrecautions",
-    label: "Cross-Contamination Precautions",
-  },
-];
+/**
+ * Checkbox option lists (URL value → human label). Shared with the
+ * suggest-a-restaurant form via src/lib/restaurantOptions.js so both
+ * stay in sync when we add new dietary/feature/type entries.
+ */
+// (imported at top of file)
 
 /**
  * Read the filter state from URL search params.

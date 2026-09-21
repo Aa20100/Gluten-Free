@@ -64,17 +64,38 @@ export default function Header() {
             )
           )}
 
-          {/* Gate on isSignedIn too so a stale isModerator=true after
-              sign-out doesn't leak the link. */}
-          {isSignedIn && isModerator && (
+          {/* Any signed-in user can suggest a restaurant. */}
+          {isSignedIn && (
             <Link
-              href="/moderation/reports"
-              className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-900 hover:bg-amber-200"
-              title="Moderator tools"
+              href="/restaurants/suggest"
+              className="hidden text-sm font-medium text-stone-700 transition-colors hover:text-orange-700 sm:inline"
+              title="Know a great GF spot? Add it"
             >
-              <span aria-hidden="true">🛡</span>
-              Reports
+              ＋ Suggest
             </Link>
+          )}
+
+          {/* Moderator-only chips. Gated on isSignedIn too so a stale
+              isModerator=true after sign-out doesn't leak the links. */}
+          {isSignedIn && isModerator && (
+            <>
+              <Link
+                href="/moderation/reports"
+                className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-900 hover:bg-amber-200"
+                title="Moderator tools"
+              >
+                <span aria-hidden="true">🛡</span>
+                Reports
+              </Link>
+              <Link
+                href="/moderation/restaurants"
+                className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-900 hover:bg-amber-200"
+                title="Moderator tools"
+              >
+                <span aria-hidden="true">🍽</span>
+                Pending
+              </Link>
+            </>
           )}
 
           {/* Auth-aware slots. Clerk's <Show when="..."> renders its children

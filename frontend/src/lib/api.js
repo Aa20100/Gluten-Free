@@ -86,6 +86,72 @@ export function getRestaurantById(id) {
   return request(buildUrl(`/restaurants/${encodeURIComponent(id)}`));
 }
 
+// ── Restaurant suggestion workflow ───────────────────────────────────────
+
+/**
+ * Turn a suggest-restaurant payload into multipart FormData. Complex
+ * fields (address / location / dietary / features / cuisine /
+ * restaurantType / imageUrls) are JSON-stringified so the backend's
+ * normalizeMultipartBody parses them back into shape before validation.
+ * File objects go under `images`.
+ */
+function suggestToFormData(payload) {
+  const form = new FormData();
+  const JSON_KEYS = [
+    "address",
+    "location",
+    "dietary",
+    "features",
+    "cuisine",
+    "restaurantType",
+    "imageUrls",
+  ];
+  const SIMPLE_KEYS = ["name", "description", "phone", "website"];
+
+  for (const key of SIMPLE_KEYS) {
+    if (payload[key] !== undefined) form.append(key, payload[key]);
+  }
+  for (const key of JSON_KEYS) {
+    if (payload[key] !== undefined) form.append(key, JSON.stringify(payload[key]));
+  }
+  for (const file of payload.files || []) form.append("images", file, file.name);
+  return form;
+}
+
+/** POST /api/restaurants/suggest — authed. Multipart. */
+export async function suggestRestaurant(payload, getToken) {
+  const authHeaders = await getAuthHeaders(getToken);
+  return requestForm(buildUrl("/restaurants/suggest"), {
+    method: "POST",
+    headers: authHeaders,
+    body: suggestToFormData(payload),
+  });
+}
+
+/** GET /api/restaurants/pending — moderator only. */
+export async function listPendingRestaurants(getToken) {
+  const headers = await getAuthHeaders(getToken);
+  return request(buildUrl("/restaurants/pending"), { headers });
+}
+
+/** POST /api/restaurants/:id/approve — moderator only. */
+export async function approveRestaurant(id, getToken) {
+  const headers = await getAuthHeaders(getToken);
+  return request(buildUrl(`/restaurants/${encodeURIComponent(id)}/approve`), {
+    method: "POST",
+    headers,
+  });
+}
+
+/** POST /api/restaurants/:id/reject — moderator only. */
+export async function rejectRestaurant(id, getToken) {
+  const headers = await getAuthHeaders(getToken);
+  return request(buildUrl(`/restaurants/${encodeURIComponent(id)}/reject`), {
+    method: "POST",
+    headers,
+  });
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Authenticated requests
 // ────────────────────────────────────────────────────────────────────────────

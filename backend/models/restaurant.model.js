@@ -94,6 +94,30 @@ const restaurantSchema = new Schema(
     features: { type: featuresSchema, default: () => ({}) },
     averageRating: { type: Number, default: 0 },
     reviewCount: { type: Number, default: 0 },
+
+    // Moderation workflow for user-submitted restaurants.
+    // "approved" is the default so seed inserts and moderator-created rows
+    // show up publicly with no extra plumbing; user suggestions override
+    // to "pending" in the controller.
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "approved",
+      index: true,
+    },
+    submittedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    // Provenance — where the row came from. "osm" is reserved for a
+    // later OpenStreetMap import; this class only uses "manual" and
+    // "user_suggested".
+    source: {
+      type: String,
+      enum: ["manual", "user_suggested", "osm"],
+      default: "manual",
+    },
   },
   { timestamps: true }
 );
