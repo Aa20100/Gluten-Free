@@ -80,12 +80,12 @@ export default function Header() {
           {isSignedIn && isModerator && (
             <>
               <Link
-                href="/moderation/reports"
+                href="/restaurants/new"
                 className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-900 hover:bg-amber-200"
-                title="Moderator tools"
+                title="Moderator: add a restaurant directly"
               >
-                <span aria-hidden="true">🛡</span>
-                Reports
+                <span aria-hidden="true">＋</span>
+                Add
               </Link>
               <Link
                 href="/moderation/restaurants"
@@ -94,6 +94,14 @@ export default function Header() {
               >
                 <span aria-hidden="true">🍽</span>
                 Pending
+              </Link>
+              <Link
+                href="/moderation/reports"
+                className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-900 hover:bg-amber-200"
+                title="Moderator tools"
+              >
+                <span aria-hidden="true">🛡</span>
+                Reports
               </Link>
             </>
           )}

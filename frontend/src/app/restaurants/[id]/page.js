@@ -18,6 +18,7 @@ import {
   createReview,
   updateReview,
   deleteReview,
+  getMe,
 } from "@/lib/api";
 
 // ── Labels ──────────────────────────────────────────────────────────────
@@ -131,6 +132,7 @@ export default function RestaurantDetailPage({ params }) {
   const [reviews, setReviews] = useState({ status: "loading", data: [], error: null });
   const [favorites, setFavorites] = useState({ status: "idle", ids: new Set(), error: null });
   const [myReview, setMyReview] = useState({ status: "idle", data: null });
+  const [isModerator, setIsModerator] = useState(false);
 
   // ── Fetch restaurant ────────────────────────────────────────────────
   useEffect(() => {
@@ -186,6 +188,16 @@ export default function RestaurantDetailPage({ params }) {
         setMyReview({ status: "success", data: found });
       } catch {
         if (!cancelled) setMyReview({ status: "success", data: null });
+      }
+    })();
+
+    // Fetch the DB user so we can surface the moderator Edit button.
+    (async () => {
+      try {
+        const me = await getMe(getToken);
+        if (!cancelled) setIsModerator(me?.role === "moderator");
+      } catch {
+        // leave isModerator false
       }
     })();
 
@@ -247,6 +259,7 @@ export default function RestaurantDetailPage({ params }) {
               restaurant={restaurant.data}
               isSignedIn={isSignedIn}
               userLoaded={userLoaded}
+              isModerator={isModerator}
               isFavorite={favorites.ids.has(String(id))}
               onToggleFavorite={handleToggleFavorite}
               reviews={reviews}
@@ -272,6 +285,7 @@ function RestaurantDetail({
   restaurant,
   isSignedIn,
   userLoaded,
+  isModerator,
   isFavorite,
   onToggleFavorite,
   reviews,
@@ -316,9 +330,21 @@ function RestaurantDetail({
 
         <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start sm:justify-between sm:p-8">
           <div className="min-w-0">
-            <h1 className="text-3xl font-extrabold tracking-tight text-stone-900 sm:text-4xl">
-              {name}
-            </h1>
+            <div className="flex flex-wrap items-baseline gap-3">
+              <h1 className="text-3xl font-extrabold tracking-tight text-stone-900 sm:text-4xl">
+                {name}
+              </h1>
+              {isModerator && (
+                <Link
+                  href={`/restaurants/${restaurantId}/edit`}
+                  className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-900 hover:bg-amber-100"
+                  title="Moderator edit"
+                >
+                  <span aria-hidden="true">✎</span>
+                  Edit
+                </Link>
+              )}
+            </div>
             {cityState && (
               <p className="mt-2 text-stone-600">
                 <span aria-hidden="true">📍 </span>

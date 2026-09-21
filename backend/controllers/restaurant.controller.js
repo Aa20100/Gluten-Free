@@ -182,27 +182,87 @@ export async function getRestaurantById(req, res, next) {
   }
 }
 
-/** POST /api/restaurants */
+/**
+ * POST /api/restaurants — moderator only (see routes).
+ *
+ * Moderators create restaurants that are approved+manual from the start —
+ * this endpoint bypasses the pending queue. status / source / submittedBy
+ * are FORCED regardless of what the client sends, so a moderator can't
+ * accidentally (or intentionally) create a pending row through here.
+ *
+ * Accepts JSON or multipart; any uploaded files are prepended to
+ * `imageUrls` (files first for intuitive display ordering).
+ */
 export async function createRestaurant(req, res, next) {
   try {
-    const restaurant = await Restaurant.create(req.body);
+    const uploadedUrls = await uploadFilesToCloudinary(req.files);
+    const existingUrls = Array.isArray(req.body.imageUrls)
+      ? req.body.imageUrls
+      : [];
+
+    const restaurant = await Restaurant.create({
+      ...req.body,
+      imageUrls: [...uploadedUrls, ...existingUrls],
+      // Force provenance — never trust client input for these.
+      status: "approved",
+      source: "manual",
+      submittedBy: null,
+    });
+
     res.status(201).json(restaurant);
   } catch (err) {
     next(err);
   }
 }
 
-/** PUT /api/restaurants/:id */
+/**
+ * PUT /api/restaurants/:id — moderator only.
+ *
+ * Accepts JSON or multipart. Image handling mirrors the review/post
+ * update semantics:
+ *   - client-sent `imageUrls` = URLs to KEEP (removals happen client-side)
+ *   - new file uploads (`req.files`) append to that kept set
+ *   - sending neither leaves existing imageUrls alone
+ *
+ * status / source / submittedBy on the body are ignored — moderators
+ * change status through the approve/reject endpoints, not this one.
+ */
 export async function updateRestaurant(req, res, next) {
   try {
     const { id } = req.params;
     if (!mongoose.isValidObjectId(id)) return badId(res, id);
 
-    const restaurant = await Restaurant.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const restaurant = await Restaurant.findById(id);
     if (!restaurant) return notFound(res, id);
+
+    // Apply every editable field the client sent.
+    const EDITABLE = [
+      "name",
+      "description",
+      "address",
+      "location",
+      "phone",
+      "website",
+      "cuisine",
+      "restaurantType",
+      "dietary",
+      "features",
+    ];
+    for (const key of EDITABLE) {
+      if (key in req.body) restaurant[key] = req.body[key];
+    }
+
+    // Image handling — same pattern used on reviews/posts.
+    const uploadedUrls = await uploadFilesToCloudinary(req.files);
+    const clientSentImageUrls = "imageUrls" in req.body;
+    if (clientSentImageUrls || uploadedUrls.length > 0) {
+      const kept = clientSentImageUrls
+        ? req.body.imageUrls
+        : restaurant.imageUrls;
+      restaurant.imageUrls = [...(kept || []), ...uploadedUrls];
+    }
+
+    await restaurant.save();
 
     res.json(restaurant);
   } catch (err) {

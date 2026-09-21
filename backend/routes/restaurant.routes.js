@@ -43,9 +43,30 @@ router.get(
 );
 
 router.get("/:id", getRestaurantById);
-router.post("/", validateCreateRestaurant, createRestaurant);
-router.put("/:id", validateUpdateRestaurant, updateRestaurant);
-router.delete("/:id", deleteRestaurant);
+
+// Write endpoints — moderator only. All three previously accepted
+// unauthenticated requests, which meant anyone could delete or edit a
+// restaurant. The suggestion workflow (POST /suggest) stays open for
+// any signed-in user.
+router.post(
+  "/",
+  requireAuth,
+  requireModerator,
+  imagesUpload,
+  normalizeMultipartBody,
+  validateCreateRestaurant,
+  createRestaurant
+);
+router.put(
+  "/:id",
+  requireAuth,
+  requireModerator,
+  imagesUpload,
+  normalizeMultipartBody,
+  validateUpdateRestaurant,
+  updateRestaurant
+);
+router.delete("/:id", requireAuth, requireModerator, deleteRestaurant);
 
 // Moderator approve / reject — routes are more specific than `/:id`
 // alone, so ordering with the plain `/:id` routes doesn't matter here.

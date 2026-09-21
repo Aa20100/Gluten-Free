@@ -95,7 +95,7 @@ export function getRestaurantById(id) {
  * normalizeMultipartBody parses them back into shape before validation.
  * File objects go under `images`.
  */
-function suggestToFormData(payload) {
+function restaurantToFormData(payload) {
   const form = new FormData();
   const JSON_KEYS = [
     "address",
@@ -124,8 +124,44 @@ export async function suggestRestaurant(payload, getToken) {
   return requestForm(buildUrl("/restaurants/suggest"), {
     method: "POST",
     headers: authHeaders,
-    body: suggestToFormData(payload),
+    body: restaurantToFormData(payload),
   });
+}
+
+/**
+ * POST /api/restaurants — moderator only. Multipart with files.
+ * Backend forces status: approved / source: manual regardless of body.
+ */
+export async function createRestaurant(payload, getToken) {
+  const authHeaders = await getAuthHeaders(getToken);
+  return requestForm(buildUrl("/restaurants"), {
+    method: "POST",
+    headers: authHeaders,
+    body: restaurantToFormData(payload),
+  });
+}
+
+/** PUT /api/restaurants/:id — moderator only. Multipart with files. */
+export async function updateRestaurant(id, payload, getToken) {
+  const authHeaders = await getAuthHeaders(getToken);
+  return requestForm(buildUrl(`/restaurants/${encodeURIComponent(id)}`), {
+    method: "PUT",
+    headers: authHeaders,
+    body: restaurantToFormData(payload),
+  });
+}
+
+/** DELETE /api/restaurants/:id — moderator only. Returns true on 204. */
+export async function deleteRestaurant(id, getToken) {
+  const headers = await getAuthHeaders(getToken);
+  const url = buildUrl(`/restaurants/${encodeURIComponent(id)}`);
+  const res = await fetch(url, { method: "DELETE", headers });
+  if (!res.ok) {
+    const err = new Error(`Delete restaurant failed: ${res.status} ${res.statusText}`);
+    err.status = res.status;
+    throw err;
+  }
+  return true;
 }
 
 /** GET /api/restaurants/pending — moderator only. */
