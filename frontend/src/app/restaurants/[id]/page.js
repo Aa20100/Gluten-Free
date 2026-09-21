@@ -839,14 +839,46 @@ function MyReviewForm({ existing, restaurantId, getToken, onSaved, onDeleted }) 
 }
 
 // ────────────────────────────────────────────────────────────────────────
-// Restaurant gallery — hero image + thumbnail row (click to swap)
+// Restaurant gallery — auto-scrolling carousel + thumbnail row
 // ────────────────────────────────────────────────────────────────────────
+
+/**
+ * Auto-advances through the images every AUTO_ADVANCE_MS. Pauses while
+ * the pointer is over the hero, or when the user clicks the pause
+ * button. Manual navigation (arrows, dots, thumbnails) resets the
+ * countdown so the next auto-advance is always ~5 s away from the last
+ * user interaction.
+ *
+ * A single image falls back to the pre-carousel behavior (just show it).
+ */
+const AUTO_ADVANCE_MS = 5000;
 
 function RestaurantGallery({ imageUrls, alt }) {
   const images = Array.isArray(imageUrls) ? imageUrls.filter(Boolean) : [];
   const [activeIdx, setActiveIdx] = useState(0);
+  const [hovering, setHovering] = useState(false);
+  const [playing, setPlaying] = useState(true);
 
-  if (images.length === 0) {
+  const total = images.length;
+  const safeIdx = total > 0 ? Math.min(activeIdx, total - 1) : 0;
+
+  // Auto-advance timer. Using setTimeout (not setInterval) + activeIdx
+  // as a dep means every manual nav also resets the countdown — user
+  // clicks Next and gets a fresh 5 s before the next auto-advance.
+  useEffect(() => {
+    if (total <= 1 || !playing || hovering) return;
+    const id = setTimeout(() => {
+      setActiveIdx((i) => (i + 1) % total);
+    }, AUTO_ADVANCE_MS);
+    return () => clearTimeout(id);
+  }, [total, playing, hovering, activeIdx]);
+
+  const goto = (n) => {
+    if (total <= 0) return;
+    setActiveIdx(((n % total) + total) % total);
+  };
+
+  if (total === 0) {
     return (
       <div className="flex h-56 items-center justify-center bg-gradient-to-br from-orange-100 to-amber-100 text-6xl sm:h-72">
         🍽️
@@ -854,20 +886,80 @@ function RestaurantGallery({ imageUrls, alt }) {
     );
   }
 
-  const safeIdx = Math.min(activeIdx, images.length - 1);
-  const hero = images[safeIdx];
-
   return (
     <div>
-      {/* Hero */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={hero}
-        alt={alt}
-        className="h-56 w-full object-cover sm:h-72"
-      />
-      {/* Thumbnail row — only when there's more than one image. */}
-      {images.length > 1 && (
+      <div
+        className="relative"
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
+      >
+        {/* Hero. aria-live so screen readers announce swaps. */}
+        <div
+          aria-live="polite"
+          aria-roledescription="carousel"
+          aria-label={`${alt} photo gallery`}
+          className="relative"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            key={images[safeIdx]}
+            src={images[safeIdx]}
+            alt={`${alt} — photo ${safeIdx + 1} of ${total}`}
+            className="h-56 w-full object-cover sm:h-72"
+          />
+        </div>
+
+        {total > 1 && (
+          <>
+            {/* Prev / Next arrows */}
+            <CarouselArrow
+              direction="prev"
+              onClick={() => goto(safeIdx - 1)}
+            />
+            <CarouselArrow
+              direction="next"
+              onClick={() => goto(safeIdx + 1)}
+            />
+
+            {/* Play / pause button — top right. */}
+            <button
+              type="button"
+              onClick={() => setPlaying((p) => !p)}
+              aria-label={playing ? "Pause slideshow" : "Play slideshow"}
+              aria-pressed={!playing}
+              className="absolute right-2 top-2 rounded-full bg-black/50 px-2.5 py-1 text-xs font-bold text-white opacity-70 backdrop-blur transition-opacity hover:opacity-100 focus:opacity-100"
+            >
+              {playing ? "❚❚" : "▶"}
+            </button>
+
+            {/* Dot indicators — bottom center. */}
+            <ul className="absolute inset-x-0 bottom-2 flex justify-center gap-1.5">
+              {images.map((url, i) => {
+                const active = i === safeIdx;
+                return (
+                  <li key={url}>
+                    <button
+                      type="button"
+                      onClick={() => goto(i)}
+                      aria-label={`Go to photo ${i + 1}`}
+                      aria-current={active ? "true" : undefined}
+                      className={
+                        "h-2 w-2 rounded-full transition-all " +
+                        (active
+                          ? "w-6 bg-white"
+                          : "bg-white/60 hover:bg-white/90")
+                      }
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </div>
+
+      {/* Thumbnail row — click jumps + resets the auto-advance timer. */}
+      {total > 1 && (
         <ul className="flex gap-2 overflow-x-auto p-3">
           {images.map((url, i) => {
             const active = i === safeIdx;
@@ -875,12 +967,14 @@ function RestaurantGallery({ imageUrls, alt }) {
               <li key={url}>
                 <button
                   type="button"
-                  onClick={() => setActiveIdx(i)}
+                  onClick={() => goto(i)}
                   aria-label={`Show image ${i + 1}`}
                   aria-pressed={active}
                   className={
                     "block h-16 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-colors " +
-                    (active ? "border-orange-500" : "border-transparent hover:border-orange-200")
+                    (active
+                      ? "border-orange-500"
+                      : "border-transparent hover:border-orange-200")
                   }
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -896,6 +990,23 @@ function RestaurantGallery({ imageUrls, alt }) {
         </ul>
       )}
     </div>
+  );
+}
+
+function CarouselArrow({ direction, onClick }) {
+  const isPrev = direction === "prev";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={isPrev ? "Previous photo" : "Next photo"}
+      className={
+        "absolute top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-lg font-bold text-white opacity-70 backdrop-blur transition-opacity hover:opacity-100 focus:opacity-100 " +
+        (isPrev ? "left-2" : "right-2")
+      }
+    >
+      {isPrev ? "‹" : "›"}
+    </button>
   );
 }
 
