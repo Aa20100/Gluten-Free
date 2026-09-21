@@ -73,11 +73,25 @@ function ManageList() {
 
   // Re-fetch whenever the committed query changes. useState init already
   // covers the first-mount loading state, so no setState-in-effect needed.
+  // Backend paginates at 20/page + caps limit at 100 — request the max
+  // per page and, for the ambitious future where mods have more than 100
+  // restaurants matching a search, note we'd want proper pagination here.
   useEffect(() => {
     let cancelled = false;
-    // Backend supports { name } as a case-insensitive partial match.
-    getRestaurants(activeQ ? { name: activeQ } : {})
-      .then((data) => !cancelled && setState({ status: "success", data, error: null }))
+    const params = { limit: 100 };
+    if (activeQ) params.name = activeQ; // case-insensitive partial
+    getRestaurants(params)
+      .then((res) => {
+        if (cancelled) return;
+        // Response shape: { restaurants, total, page, limit, pageCount }
+        setState({
+          status: "success",
+          data: res.restaurants,
+          total: res.total,
+          truncated: res.total > res.restaurants.length,
+          error: null,
+        });
+      })
       .catch((error) => !cancelled && setState({ status: "error", data: [], error }));
     return () => { cancelled = true; };
   }, [activeQ]);
@@ -155,7 +169,14 @@ function ManageList() {
         {state.status === "success" && state.data.length > 0 && (
           <>
             <p className="mb-2 text-xs text-stone-500">
-              {state.data.length} restaurant{state.data.length === 1 ? "" : "s"}
+              Showing {state.data.length.toLocaleString()} of{" "}
+              {state.total.toLocaleString()} restaurant
+              {state.total === 1 ? "" : "s"}
+              {state.truncated && (
+                <span className="ml-1 text-amber-700">
+                  — narrow with the search box to see the rest
+                </span>
+              )}
             </p>
             <ul className="divide-y divide-orange-100 rounded-2xl border border-orange-100 bg-white shadow-sm">
               {state.data.map((r) => (

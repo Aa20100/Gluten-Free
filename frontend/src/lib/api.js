@@ -71,8 +71,18 @@ async function request(url, init) {
 }
 
 /**
- * GET /api/restaurants with optional filters.
- * @param {{ name?: string, city?: string, state?: string, zip?: string }} [params]
+ * GET /api/restaurants — paginated feed.
+ *
+ * @param {{
+ *   name?: string, city?: string, state?: string, zip?: string,
+ *   restaurantType?: string[], dietary?: string[], features?: string[],
+ *   lat?: number, lng?: number, radius?: number,
+ *   page?: number, limit?: number,
+ * }} [params]
+ * @returns {Promise<{
+ *   restaurants: Restaurant[], total: number, page: number,
+ *   limit: number, pageCount: number,
+ * }>}
  */
 export function getRestaurants(params) {
   return request(buildUrl("/restaurants", params));

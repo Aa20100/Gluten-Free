@@ -29,6 +29,9 @@ const GEO_KEYS = ["lat", "lng", "radius"];
 /** Default radius (km) used when displaying the geo banner without one. */
 const DEFAULT_GEO_RADIUS_KM = 25;
 
+/** How many restaurants per page in the listing. Matches the backend default. */
+const PAGE_SIZE = 20;
+
 /**
  * Core dietary flag: always defaults to checked, visually emphasized, and
  * excluded from the "active filters" count so the count reflects how many
@@ -80,8 +83,9 @@ function readFilters(searchParams) {
 }
 
 /** Convert filter state into the params object the API client expects. */
-function apiParamsFrom(filters) {
-  const out = { ...filters.text, ...filters.geo };
+function apiParamsFrom(filters, page) {
+  const out = { ...filters.text, ...filters.geo, limit: PAGE_SIZE };
+  if (page > 1) out.page = page;
   for (const key of CATEGORY_KEYS) {
     if (filters.categories[key].length > 0) {
       out[key] = filters.categories[key]; // api.js joins arrays with ","
@@ -268,16 +272,13 @@ function FilterPanel({ filters, onToggle, onClearAll }) {
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
- * Fetches restaurants for one specific set of params. Remounted (via key)
- * whenever the URL changes, so it can initialize its state as "loading"
- * without needing to setState synchronously in an effect body.
+ * Fetches one page of restaurants. Remounted (via key) whenever the URL
+ * changes, so it can initialize its state as "loading" without a
+ * setState-in-effect. The parent controls page navigation by pushing
+ * `?page=N` and letting us remount.
  */
-function ResultsPanel({ params }) {
-  const [state, setState] = useState({
-    status: "loading",
-    data: [],
-    error: null,
-  });
+function ResultsPanel({ params, onPageChange, currentPage }) {
+  const [state, setState] = useState({ status: "loading", data: null, error: null });
 
   useEffect(() => {
     let cancelled = false;
@@ -289,7 +290,7 @@ function ResultsPanel({ params }) {
       })
       .catch((err) => {
         if (cancelled) return;
-        setState({ status: "error", data: [], error: err });
+        setState({ status: "error", data: null, error: err });
       });
 
     return () => {
@@ -301,19 +302,67 @@ function ResultsPanel({ params }) {
 
   if (state.status === "loading") return <LoadingGrid />;
   if (state.status === "error") return <ErrorState error={state.error} />;
-  if (state.data.length === 0) return <EmptyState />;
+
+  const { restaurants = [], total = 0, page = 1, pageCount = 1 } = state.data || {};
+
+  if (restaurants.length === 0) return <EmptyState />;
+
+  // Human-readable "showing X–Y of Z" line — clearer than a raw count
+  // once results span multiple pages.
+  const startIdx = (page - 1) * PAGE_SIZE + 1;
+  const endIdx = startIdx + restaurants.length - 1;
 
   return (
     <>
       <p className="mb-4 text-sm text-stone-500">
-        {state.data.length} result{state.data.length === 1 ? "" : "s"}
+        Showing {startIdx.toLocaleString()}–{endIdx.toLocaleString()} of{" "}
+        {total.toLocaleString()} result{total === 1 ? "" : "s"}
       </p>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-        {state.data.map((restaurant) => (
+        {restaurants.map((restaurant) => (
           <RestaurantCard key={restaurant._id} restaurant={restaurant} />
         ))}
       </div>
+
+      {pageCount > 1 && (
+        <Pagination
+          page={page}
+          pageCount={pageCount}
+          onGo={onPageChange}
+        />
+      )}
     </>
+  );
+}
+
+/** Prev / Next + "Page X of Y" — mirrors the forum listing's control. */
+function Pagination({ page, pageCount, onGo }) {
+  const goto = (n) => {
+    const clamped = Math.min(Math.max(1, n), pageCount);
+    if (clamped !== page) onGo(clamped);
+  };
+  return (
+    <div className="mt-6 flex items-center justify-between text-sm">
+      <button
+        type="button"
+        disabled={page <= 1}
+        onClick={() => goto(page - 1)}
+        className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-semibold text-stone-700 disabled:opacity-40"
+      >
+        ← Prev
+      </button>
+      <span className="text-stone-500">
+        Page {page.toLocaleString()} of {pageCount.toLocaleString()}
+      </span>
+      <button
+        type="button"
+        disabled={page >= pageCount}
+        onClick={() => goto(page + 1)}
+        className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-semibold text-stone-700 disabled:opacity-40"
+      >
+        Next →
+      </button>
+    </div>
   );
 }
 
@@ -328,6 +377,7 @@ function RestaurantsListing() {
   const searchKey = searchParams.toString();
   const filters = readFilters(searchParams);
   const activeCount = activeFilterCount(filters);
+  const currentPage = Math.max(1, Number(searchParams.get("page")) || 1);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -345,12 +395,29 @@ function RestaurantsListing() {
    * Build a new URLSearchParams from the current one, then push it.
    * `scroll: false` keeps the viewport where the user was — otherwise
    * every filter toggle would snap the page back to the top.
+   *
+   * Any filter change resets `page` to 1, so tightening a filter can't
+   * leave the user staring at "page 7" of a smaller result set.
    */
   const pushParams = (updater) => {
     const next = new URLSearchParams(searchParams);
     updater(next);
+    next.delete("page");
     const qs = next.toString();
     router.push(qs ? `/restaurants?${qs}` : "/restaurants", { scroll: false });
+  };
+
+  /**
+   * Navigate to a specific page while keeping every other filter intact.
+   * Pushes ?page=N (or drops it entirely for page 1) and DOES scroll to
+   * the top of the results — jumping to page 5 while stuck at the bottom
+   * of page 1's grid is disorienting.
+   */
+  const handlePageChange = (n) => {
+    const next = new URLSearchParams(searchParams);
+    if (n <= 1) next.delete("page");
+    else next.set("page", String(n));
+    router.push(`/restaurants?${next.toString()}`);
   };
 
   const handleToggle = (category, value, checked) => {
@@ -465,7 +532,9 @@ function RestaurantsListing() {
         <div className="min-w-0 flex-1">
           <ResultsPanel
             key={`results-${searchKey}`}
-            params={apiParamsFrom(filters)}
+            params={apiParamsFrom(filters, currentPage)}
+            currentPage={currentPage}
+            onPageChange={handlePageChange}
           />
         </div>
       </div>

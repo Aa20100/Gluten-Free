@@ -65,14 +65,19 @@ function notFound(res, id) {
  *                              e.g. ?dietary=glutenFree,vegan
  * - features                 comma-separated feature flags; EVERY one must
  *                              be true (same semantics as `dietary`)
+
  * - lat, lng, radius         geospatial filter — only restaurants whose
  *                              `location` point falls within `radius` km of
  *                              (lng, lat). radius defaults to 25 km if
  *                              lat/lng are given without it. Requires the
  *                              2dsphere index on `location`.
+ * - page, limit              pagination. Defaults to page 1, limit 20;
+ *                              `limit` is capped at 100.
  *
  * The mongo filter is built up piece by piece so that any combination of
  * params AND together naturally.
+ *
+ * Response: { restaurants, total, page, limit, pageCount }
  */
 export async function getAllRestaurants(req, res, next) {
   try {
@@ -160,8 +165,26 @@ export async function getAllRestaurants(req, res, next) {
       };
     }
 
-    const restaurants = await Restaurant.find(filter).sort({ name: 1 });
-    res.json(restaurants);
+    // Pagination — defaults chosen to match the listing page (20/page).
+    // `limit` is capped at 100 so a caller can't accidentally page-through
+    // the whole collection in one request.
+    const pageN = Math.max(1, Number(req.query.page) || 1);
+    const limitN = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+    const skip = (pageN - 1) * limitN;
+
+    // Two round-trips in parallel: the paginated slice + the total count.
+    const [restaurants, total] = await Promise.all([
+      Restaurant.find(filter).sort({ name: 1 }).skip(skip).limit(limitN),
+      Restaurant.countDocuments(filter),
+    ]);
+
+    res.json({
+      restaurants,
+      total,
+      page: pageN,
+      limit: limitN,
+      pageCount: Math.max(1, Math.ceil(total / limitN)),
+    });
   } catch (err) {
     next(err);
   }
