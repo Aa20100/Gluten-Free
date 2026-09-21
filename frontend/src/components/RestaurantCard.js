@@ -31,12 +31,13 @@ function formatLocation(address) {
 export default function RestaurantCard({ restaurant }) {
   if (!restaurant) return null;
 
-  const { _id, name, address, imageUrls, features } = restaurant;
+  const { _id, name, address, imageUrls, features, source } = restaurant;
   const location = formatLocation(address);
   const tags = buildFeatureTags(features);
   // Cards only show a single hero — the first image from the gallery. The
   // rest render on the detail page.
   const heroImage = Array.isArray(imageUrls) ? imageUrls[0] : null;
+  const isOsm = source === "osm";
 
   return (
     <Link
@@ -64,6 +65,11 @@ export default function RestaurantCard({ restaurant }) {
       <div className="flex flex-1 flex-col gap-2 p-5">
         <h3 className="text-lg font-semibold text-stone-900">{name}</h3>
         {location && <p className="text-sm text-stone-500">{location}</p>}
+        {isOsm && (
+          <p className="text-xs italic text-stone-500">
+            Community info — details may be incomplete
+          </p>
+        )}
         {tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
             {tags.map((tag) => (

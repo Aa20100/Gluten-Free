@@ -308,7 +308,15 @@ function RestaurantDetail({
     features,
     averageRating = 0,
     reviewCount = 0,
+    source,
   } = restaurant;
+  const isOsm = source === "osm";
+  // Where "Suggest an update" points: mods jump straight to the edit
+  // form; regular / signed-out users go through the suggest flow as a
+  // placeholder until a proper user-driven edit is built.
+  const suggestUpdateHref = isModerator
+    ? `/restaurants/${restaurantId}/edit`
+    : "/restaurants/suggest";
 
   const dietaryFlags = activeFlags(dietary, DIETARY_LABELS);
   const featureFlags = activeFlags(features, FEATURE_LABELS);
@@ -350,6 +358,22 @@ function RestaurantDetail({
                 <span aria-hidden="true">📍 </span>
                 {cityState}
               </p>
+            )}
+            {isOsm && (
+              <div className="mt-3 text-xs text-stone-500">
+                <p className="italic">
+                  Community info — details may be incomplete
+                </p>
+                <p className="mt-0.5">
+                  Know this restaurant well?{" "}
+                  <Link
+                    href={suggestUpdateHref}
+                    className="font-semibold text-orange-700 hover:text-orange-800"
+                  >
+                    Suggest an update
+                  </Link>
+                </p>
+              </div>
             )}
             {(typeLabels.length > 0 || cuisine.length > 0) && (
               <div className="mt-4 flex flex-wrap gap-2">

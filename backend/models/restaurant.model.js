@@ -110,13 +110,22 @@ const restaurantSchema = new Schema(
       ref: "User",
       default: null,
     },
-    // Provenance — where the row came from. "osm" is reserved for a
-    // later OpenStreetMap import; this class only uses "manual" and
-    // "user_suggested".
+    // Provenance — where the row came from.
     source: {
       type: String,
       enum: ["manual", "user_suggested", "osm"],
       default: "manual",
+    },
+
+    // OpenStreetMap element id in the shape "type/id" (e.g. "node/12345"
+    // or "way/67890"). Used by utils/importFromOsm.js to dedupe across
+    // runs. Sparse+unique so manual and user-suggested rows (which
+    // have no osmId) don't collide with each other on null.
+    osmId: {
+      type: String,
+      index: true,
+      sparse: true,
+      unique: true,
     },
   },
   { timestamps: true }
