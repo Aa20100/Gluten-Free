@@ -20,7 +20,7 @@ import { getRestaurants, deleteRestaurant } from "@/lib/api";
  */
 export default function ManageRestaurantsPage() {
   return (
-    <div className="flex flex-1 flex-col bg-amber-50">
+    <div className="flex flex-1 flex-col bg-white">
       <Header />
       <main className="flex-1">
         <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
@@ -36,7 +36,7 @@ export default function ManageRestaurantsPage() {
             </div>
             <Link
               href="/restaurants/new"
-              className="inline-flex items-center gap-2 rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+              className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
             >
               <span aria-hidden="true">＋</span>
               Add new restaurant
@@ -47,7 +47,7 @@ export default function ManageRestaurantsPage() {
             Looking for user-suggested restaurants awaiting review?{" "}
             <Link
               href="/moderation/restaurants"
-              className="font-semibold text-orange-700 hover:text-orange-800"
+              className="font-semibold text-emerald-700 hover:text-emerald-800"
             >
               Pending queue →
             </Link>
@@ -113,18 +113,18 @@ function ManageList() {
       {/* Search */}
       <form
         onSubmit={handleSearchSubmit}
-        className="flex gap-2 rounded-2xl border border-orange-100 bg-white p-3 shadow-sm"
+        className="flex gap-2 rounded-2xl border border-emerald-100 bg-white p-3 shadow-sm"
       >
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by name…"
-          className="flex-1 rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+          className="flex-1 rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
         />
         <button
           type="submit"
-          className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
+          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
         >
           Search
         </button>
@@ -155,7 +155,7 @@ function ManageList() {
           </div>
         )}
         {state.status === "success" && state.data.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-10 text-center">
+          <div className="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-10 text-center">
             <p className="text-lg font-semibold text-stone-800">
               {activeQ ? "No matches" : "No restaurants yet"}
             </p>
@@ -178,7 +178,7 @@ function ManageList() {
                 </span>
               )}
             </p>
-            <ul className="divide-y divide-orange-100 rounded-2xl border border-orange-100 bg-white shadow-sm">
+            <ul className="divide-y divide-emerald-100 rounded-2xl border border-emerald-100 bg-white shadow-sm">
               {state.data.map((r) => (
                 <ManageRow
                   key={r._id}
@@ -228,14 +228,14 @@ function ManageRow({ restaurant, getToken, onDeleted }) {
             className="h-14 w-14 shrink-0 rounded-lg border border-stone-200 object-cover"
           />
         ) : (
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-stone-200 bg-orange-50 text-xl">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-stone-200 bg-emerald-50 text-xl">
             🍽️
           </div>
         )}
         <div className="min-w-0 flex-1">
           <Link
             href={`/restaurants/${_id}`}
-            className="block truncate text-base font-semibold text-stone-900 hover:text-orange-800"
+            className="block truncate text-base font-semibold text-stone-900 hover:text-emerald-800"
           >
             {name}
           </Link>
@@ -246,7 +246,7 @@ function ManageRow({ restaurant, getToken, onDeleted }) {
         <div className="flex items-center gap-2">
           <Link
             href={`/restaurants/${_id}/edit`}
-            className="rounded-lg border border-orange-300 bg-white px-3 py-1.5 text-xs font-semibold text-orange-700 hover:bg-orange-50"
+            className="rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
           >
             Edit
           </Link>

@@ -42,7 +42,7 @@ export default function RestaurantCard({ restaurant }) {
   return (
     <Link
       href={`/restaurants/${_id}`}
-      className="flex flex-col overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+      className="flex flex-col overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
     >
       {heroImage ? (
         // Plain <img> keeps things simple and avoids configuring
@@ -58,7 +58,7 @@ export default function RestaurantCard({ restaurant }) {
           }}
         />
       ) : (
-        <div className="flex h-40 items-center justify-center bg-gradient-to-br from-orange-100 to-amber-100 text-4xl">
+        <div className="flex h-40 items-center justify-center bg-gradient-to-br from-emerald-100 to-emerald-100 text-4xl">
           🍽️
         </div>
       )}

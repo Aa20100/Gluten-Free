@@ -185,7 +185,7 @@ export default function RestaurantForm({
             type="button"
             onClick={handleGeolocate}
             disabled={geoStatus.state === "loading"}
-            className="inline-flex items-center gap-2 rounded-full border border-orange-300 bg-white px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-50 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
           >
             <span aria-hidden="true">📍</span>
             {geoStatus.state === "loading" ? "Getting location…" : "Use my current location"}
@@ -287,7 +287,7 @@ export default function RestaurantForm({
         <button
           type="submit"
           disabled={!canSubmit}
-          className="rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? submittingLabel : submitLabel}
         </button>
@@ -380,7 +380,7 @@ function buildPayload(form) {
 // ── Local primitives ────────────────────────────────────────────────────
 
 const inputClass =
-  "w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200";
+  "w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200";
 
 function pickTruthy(obj) {
   return Object.fromEntries(Object.entries(obj).filter(([, v]) => v));
@@ -388,7 +388,7 @@ function pickTruthy(obj) {
 
 function Section({ title, hint, children }) {
   return (
-    <section className="space-y-3 rounded-2xl border border-orange-100 bg-white p-6 shadow-sm sm:p-8">
+    <section className="space-y-3 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm sm:p-8">
       <div>
         <h2 className="text-sm font-bold uppercase tracking-wide text-stone-500">
           {title}
@@ -421,12 +421,12 @@ function CheckboxGrid({ options, selected, onToggle }) {
     <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
       {options.map(({ value, label }) => (
         <li key={value}>
-          <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm text-stone-700 hover:bg-orange-50">
+          <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm text-stone-700 hover:bg-emerald-50">
             <input
               type="checkbox"
               checked={selectedSet.has(value)}
               onChange={(e) => onToggle(value, e.target.checked)}
-              className="h-4 w-4 rounded border-stone-300 text-orange-600 focus:ring-2 focus:ring-orange-300"
+              className="h-4 w-4 rounded border-stone-300 text-emerald-600 focus:ring-2 focus:ring-emerald-300"
             />
             <span>{label}</span>
           </label>

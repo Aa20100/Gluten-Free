@@ -135,7 +135,7 @@ function SearchBar({ initialValues, onSubmit }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm sm:p-6"
+      className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm sm:p-6"
     >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
@@ -154,7 +154,7 @@ function SearchBar({ initialValues, onSubmit }) {
               value={values[key]}
               onChange={set(key)}
               placeholder={placeholder}
-              className="rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+              className="rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
             />
           </label>
         ))}
@@ -169,7 +169,7 @@ function SearchBar({ initialValues, onSubmit }) {
         </button>
         <button
           type="submit"
-          className="rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-700"
+          className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
         >
           Search
         </button>
@@ -199,7 +199,7 @@ function FilterSection({ title, options, selected, onToggle, coreValue }) {
                   "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors " +
                   (isCore
                     ? "border border-emerald-200 bg-emerald-50 font-semibold text-emerald-800 hover:bg-emerald-100"
-                    : "text-stone-700 hover:bg-orange-50")
+                    : "text-stone-700 hover:bg-emerald-50")
                 }
               >
                 <input
@@ -210,7 +210,7 @@ function FilterSection({ title, options, selected, onToggle, coreValue }) {
                     "h-4 w-4 rounded border-stone-300 focus:ring-2 focus:ring-offset-0 " +
                     (isCore
                       ? "text-emerald-600 focus:ring-emerald-300"
-                      : "text-orange-600 focus:ring-orange-300")
+                      : "text-emerald-600 focus:ring-emerald-300")
                   }
                 />
                 <span className="flex-1">{label}</span>
@@ -236,7 +236,7 @@ function FilterPanel({ filters, onToggle, onClearAll }) {
         <button
           type="button"
           onClick={onClearAll}
-          className="text-xs font-semibold text-orange-700 underline-offset-2 hover:underline"
+          className="text-xs font-semibold text-emerald-700 underline-offset-2 hover:underline"
         >
           Clear all
         </button>
@@ -504,12 +504,12 @@ function RestaurantsListing() {
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="inline-flex items-center gap-2 rounded-lg border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-orange-700 shadow-sm hover:bg-orange-50 lg:hidden"
+          className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm hover:bg-emerald-50 lg:hidden"
         >
           <span aria-hidden="true">⚙️</span>
           Filters
           {activeCount > 0 && (
-            <span className="ml-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-orange-600 px-1.5 text-xs font-bold text-white">
+            <span className="ml-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-emerald-600 px-1.5 text-xs font-bold text-white">
               {activeCount}
             </span>
           )}
@@ -519,7 +519,7 @@ function RestaurantsListing() {
       <div className="mt-4 flex gap-8">
         {/* Desktop sidebar */}
         <aside className="hidden w-64 flex-shrink-0 lg:block">
-          <div className="sticky top-24 rounded-2xl border border-orange-100 bg-white p-6 shadow-sm">
+          <div className="sticky top-24 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
             <FilterPanel
               filters={filters}
               onToggle={handleToggle}
@@ -571,7 +571,7 @@ function RestaurantsListing() {
               <button
                 type="button"
                 onClick={() => setDrawerOpen(false)}
-                className="w-full rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-700"
+                className="w-full rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
               >
                 Show results
               </button>
@@ -592,7 +592,7 @@ function GeoBanner({ radius, onChange }) {
   // the banner still reads sensibly if radius was dropped somehow.
   const km = Number(radius) || DEFAULT_GEO_RADIUS_KM;
   return (
-    <div className="mb-4 flex flex-col items-start justify-between gap-2 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-stone-800 sm:flex-row sm:items-center">
+    <div className="mb-4 flex flex-col items-start justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-stone-800 sm:flex-row sm:items-center">
       <p>
         <span aria-hidden="true">📍</span> Showing restaurants within{" "}
         <span className="font-semibold">{km} km</span> of your location
@@ -600,7 +600,7 @@ function GeoBanner({ radius, onChange }) {
       <button
         type="button"
         onClick={onChange}
-        className="font-semibold text-orange-700 underline-offset-2 hover:underline"
+        className="font-semibold text-emerald-700 underline-offset-2 hover:underline"
       >
         Change
       </button>
@@ -614,9 +614,9 @@ function LoadingGrid() {
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className="animate-pulse overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm"
+          className="animate-pulse overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm"
         >
-          <div className="h-40 bg-orange-50" />
+          <div className="h-40 bg-emerald-50" />
           <div className="space-y-3 p-5">
             <div className="h-5 w-2/3 rounded bg-stone-200" />
             <div className="h-4 w-1/3 rounded bg-stone-100" />
@@ -633,7 +633,7 @@ function LoadingGrid() {
 
 function EmptyState() {
   return (
-    <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-10 text-center">
+    <div className="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-10 text-center">
       <p className="text-lg font-semibold text-stone-800">
         No restaurants match your filters
       </p>
@@ -662,7 +662,7 @@ function ErrorState({ error }) {
 
 export default function RestaurantsPage() {
   return (
-    <div className="flex flex-1 flex-col bg-amber-50">
+    <div className="flex flex-1 flex-col bg-white">
       <Header />
       <main className="flex-1">
         {/* useSearchParams requires a Suspense boundary in Next 15+. */}

@@ -43,7 +43,7 @@ function relativeDate(iso) {
 
 export default function ForumPage() {
   return (
-    <div className="flex flex-1 flex-col bg-amber-50">
+    <div className="flex flex-1 flex-col bg-white">
       <Header />
       <main className="flex-1">
         <Suspense fallback={<PageSkeleton />}>
@@ -119,7 +119,7 @@ function ForumBody() {
               </div>
               <Link
                 href="/forum"
-                className="text-sm font-semibold text-orange-700 hover:text-orange-800"
+                className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
               >
                 All categories
               </Link>
@@ -158,7 +158,7 @@ function NewPostButton() {
     <button
       type="button"
       disabled={disabled}
-      className="inline-flex items-center gap-2 rounded-full bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-700 disabled:opacity-60"
+      className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:opacity-60"
     >
       <span aria-hidden="true">＋</span>
       New Post
@@ -208,8 +208,8 @@ function CategoryCard({ href, label, emoji, active }) {
       className={
         "flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors " +
         (active
-          ? "border-orange-300 bg-orange-50 font-semibold text-orange-800"
-          : "border-orange-100 bg-white text-stone-700 hover:border-orange-200 hover:bg-orange-50")
+          ? "border-emerald-300 bg-emerald-50 font-semibold text-emerald-800"
+          : "border-emerald-100 bg-white text-stone-700 hover:border-emerald-200 hover:bg-emerald-50")
       }
     >
       <span aria-hidden="true">{emoji}</span>
@@ -255,11 +255,11 @@ function FilterInputs({ initialQ, initialTag, onQ, onTag }) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search title & body…"
-            className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+            className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
           />
           <button
             type="submit"
-            className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
           >
             Go
           </button>
@@ -276,7 +276,7 @@ function FilterInputs({ initialQ, initialTag, onQ, onTag }) {
           onChange={(e) => setTag(e.target.value)}
           onBlur={submitTag}
           placeholder="e.g. chicago"
-          className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+          className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
         />
       </form>
 
@@ -284,7 +284,7 @@ function FilterInputs({ initialQ, initialTag, onQ, onTag }) {
         <button
           type="button"
           onClick={clearAll}
-          className="self-end text-xs font-semibold text-stone-500 hover:text-orange-700"
+          className="self-end text-xs font-semibold text-stone-500 hover:text-emerald-700"
         >
           Clear
         </button>
@@ -303,7 +303,7 @@ function SortBar({ sort, onChange }) {
     { value: "popular", label: "Popular" },
   ];
   return (
-    <div className="mb-4 inline-flex rounded-full border border-orange-200 bg-white p-1 text-sm shadow-sm">
+    <div className="mb-4 inline-flex rounded-full border border-emerald-200 bg-white p-1 text-sm shadow-sm">
       {opts.map(({ value, label }) => (
         <button
           key={value}
@@ -313,8 +313,8 @@ function SortBar({ sort, onChange }) {
           className={
             "rounded-full px-4 py-1.5 font-semibold transition-colors " +
             (sort === value
-              ? "bg-orange-600 text-white"
-              : "text-stone-600 hover:text-orange-700")
+              ? "bg-emerald-600 text-white"
+              : "text-stone-600 hover:text-emerald-700")
           }
         >
           {label}
@@ -361,7 +361,7 @@ function PostList({ params }) {
 
   if (posts.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-10 text-center">
+      <div className="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-10 text-center">
         <p className="text-lg font-semibold text-stone-800">No posts yet</p>
         <p className="mt-2 text-sm text-stone-600">
           Be the first to start a discussion in this category.
@@ -382,7 +382,7 @@ function PostList({ params }) {
       <p className="mb-3 text-sm text-stone-500">
         {total} post{total === 1 ? "" : "s"}
       </p>
-      <ul className="divide-y divide-orange-100 rounded-2xl border border-orange-100 bg-white shadow-sm">
+      <ul className="divide-y divide-emerald-100 rounded-2xl border border-emerald-100 bg-white shadow-sm">
         {posts.map((post) => (
           <PostRow key={post._id} post={post} />
         ))}
@@ -421,7 +421,7 @@ function PostRow({ post }) {
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-center gap-2">
             {post.isPinned && (
-              <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-900">
+              <span className="rounded-full bg-emerald-200 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-900">
                 Pinned
               </span>
             )}
@@ -429,7 +429,7 @@ function PostRow({ post }) {
               <Link
                 href={`/forum?category=${post.category}`}
                 scroll={false}
-                className="rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-semibold text-orange-800 hover:bg-orange-200"
+                className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-200"
               >
                 {cat.emoji} {cat.label}
               </Link>
@@ -445,7 +445,7 @@ function PostRow({ post }) {
           </div>
           <Link
             href={`/forum/${post._id}`}
-            className="block text-base font-bold text-stone-900 hover:text-orange-800 sm:text-lg"
+            className="block text-base font-bold text-stone-900 hover:text-emerald-800 sm:text-lg"
           >
             {post.title}
           </Link>
@@ -494,11 +494,11 @@ function PageSkeleton() {
 
 function ListSkeleton() {
   return (
-    <ul className="animate-pulse divide-y divide-orange-100 rounded-2xl border border-orange-100 bg-white shadow-sm">
+    <ul className="animate-pulse divide-y divide-emerald-100 rounded-2xl border border-emerald-100 bg-white shadow-sm">
       {Array.from({ length: 5 }).map((_, i) => (
         <li key={i} className="p-5">
           <div className="mb-2 flex gap-2">
-            <div className="h-4 w-20 rounded-full bg-orange-100" />
+            <div className="h-4 w-20 rounded-full bg-emerald-100" />
             <div className="h-4 w-16 rounded-full bg-stone-100" />
           </div>
           <div className="h-5 w-3/4 rounded bg-stone-200" />

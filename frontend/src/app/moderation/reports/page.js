@@ -60,7 +60,7 @@ export default function ReportsPage() {
   }, [role, getToken]);
 
   return (
-    <div className="flex flex-1 flex-col bg-amber-50">
+    <div className="flex flex-1 flex-col bg-white">
       <Header />
       <main className="flex-1">
         <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
@@ -76,7 +76,7 @@ export default function ReportsPage() {
           )}
 
           {role.status === "success" && !role.isMod && (
-            <div className="mt-8 rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-8 text-center">
+            <div className="mt-8 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-8 text-center">
               <p className="text-5xl" aria-hidden="true">🛡</p>
               <h2 className="mt-4 text-xl font-bold text-stone-900">
                 Moderators only
@@ -86,7 +86,7 @@ export default function ReportsPage() {
               </p>
               <Link
                 href="/"
-                className="mt-6 inline-block rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-700"
+                className="mt-6 inline-block rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
               >
                 Back to home
               </Link>
@@ -107,7 +107,7 @@ export default function ReportsPage() {
                   </p>
                 </div>
               ) : reports.data.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-10 text-center">
+                <div className="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-10 text-center">
                   <p className="text-lg font-semibold text-stone-800">
                     No reports right now
                   </p>
@@ -116,7 +116,7 @@ export default function ReportsPage() {
                   </p>
                 </div>
               ) : (
-                <ul className="divide-y divide-orange-100 rounded-2xl border border-orange-100 bg-white shadow-sm">
+                <ul className="divide-y divide-emerald-100 rounded-2xl border border-emerald-100 bg-white shadow-sm">
                   {reports.data.map((r) => (
                     <ReportRow key={r._id} report={r} />
                   ))}
@@ -138,7 +138,7 @@ function ReportRow({ report }) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-2">
-            <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold uppercase text-amber-900">
+            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold uppercase text-emerald-900">
               {report.targetType}
             </span>
             <span className="text-xs text-stone-500">
@@ -157,7 +157,7 @@ function ReportRow({ report }) {
           {href ? (
             <Link
               href={href}
-              className="font-semibold text-orange-700 hover:text-orange-800"
+              className="font-semibold text-emerald-700 hover:text-emerald-800"
             >
               View target →
             </Link>

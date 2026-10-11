@@ -68,13 +68,13 @@ export default function NewPostPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col bg-amber-50">
+    <div className="flex flex-1 flex-col bg-white">
       <Header />
       <main className="flex-1">
         <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
           <Link
             href="/forum"
-            className="inline-flex items-center gap-1 text-sm font-medium text-orange-700 hover:text-orange-800"
+            className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 hover:text-emerald-800"
           >
             <span aria-hidden="true">←</span>
             Back to forum
@@ -86,7 +86,7 @@ export default function NewPostPage() {
 
           <form
             onSubmit={handleSubmit}
-            className="mt-6 space-y-5 rounded-2xl border border-orange-100 bg-white p-6 shadow-sm sm:p-8"
+            className="mt-6 space-y-5 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm sm:p-8"
           >
             <Field label="Title" required>
               <input
@@ -94,7 +94,7 @@ export default function NewPostPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Give your post a clear title"
-                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
               />
             </Field>
 
@@ -102,7 +102,7 @@ export default function NewPostPage() {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-stone-900 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-stone-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
               >
                 <option value="" disabled>
                   Pick a category…
@@ -124,7 +124,7 @@ export default function NewPostPage() {
                 value={tagsRaw}
                 onChange={(e) => setTagsRaw(e.target.value)}
                 placeholder="e.g. chicago, pizza, dedicated-fryer"
-                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
               />
             </Field>
 
@@ -134,7 +134,7 @@ export default function NewPostPage() {
                 onChange={(e) => setBody(e.target.value)}
                 rows={8}
                 placeholder="Share the details…"
-                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
               />
             </Field>
 
@@ -158,7 +158,7 @@ export default function NewPostPage() {
               <button
                 type="submit"
                 disabled={!canSubmit}
-                className="rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {submitting ? "Posting…" : "Post"}
               </button>

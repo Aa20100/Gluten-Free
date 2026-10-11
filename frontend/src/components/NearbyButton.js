@@ -55,14 +55,14 @@ export default function NearbyButton() {
         type="button"
         onClick={handleClick}
         disabled={isLoading}
-        className="mt-1 inline-flex items-center gap-2 rounded-full border border-orange-300 bg-white px-5 py-2.5 text-sm font-semibold text-orange-700 transition-colors hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-1 inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-5 py-2.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <span aria-hidden="true">📍</span>
         {isLoading ? "Getting your location…" : "Find Restaurants Near You"}
       </button>
 
       {(state === "denied" || state === "unsupported") && (
-        <div className="max-w-md rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-stone-700">
+        <div className="max-w-md rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-stone-700">
           <p>
             {state === "unsupported"
               ? "Your browser doesn't support location sharing, so we can't find nearby spots automatically."
@@ -70,7 +70,7 @@ export default function NearbyButton() {
           </p>
           <Link
             href="/restaurants"
-            className="mt-2 inline-block font-semibold text-orange-700 hover:text-orange-800"
+            className="mt-2 inline-block font-semibold text-emerald-700 hover:text-emerald-800"
           >
             Search by city →
           </Link>

@@ -32,16 +32,13 @@ export default function Header() {
   }, [isLoaded, isSignedIn, getToken]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-orange-100 bg-amber-50/90 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-emerald-100 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
         <Link
           href="/"
-          className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-orange-700"
+          className="text-xl font-semibold tracking-tight text-emerald-700"
         >
-          <span aria-hidden="true" className="text-2xl">
-            🌾
-          </span>
-          SafeBite
+          safely<span className="font-bold text-emerald-800">GF</span>
         </Link>
 
         <nav className="flex items-center gap-3 sm:gap-6">
@@ -50,14 +47,14 @@ export default function Header() {
               <Link
                 key={label}
                 href={href}
-                className="text-sm font-medium text-stone-700 transition-colors hover:text-orange-700"
+                className="text-sm font-medium text-stone-700 transition-colors hover:text-emerald-700"
               >
                 {label}
               </Link>
             ) : (
               <span
                 key={label}
-                className="cursor-default text-sm font-medium text-stone-700 transition-colors hover:text-orange-700"
+                className="cursor-default text-sm font-medium text-stone-700 transition-colors hover:text-emerald-700"
               >
                 {label}
               </span>
@@ -68,7 +65,7 @@ export default function Header() {
           {isSignedIn && (
             <Link
               href="/restaurants/suggest"
-              className="hidden text-sm font-medium text-stone-700 transition-colors hover:text-orange-700 sm:inline"
+              className="hidden text-sm font-medium text-stone-700 transition-colors hover:text-emerald-700 sm:inline"
               title="Know a great GF spot? Add it"
             >
               ＋ Suggest
@@ -81,7 +78,7 @@ export default function Header() {
             <>
               <Link
                 href="/moderation/restaurants/manage"
-                className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-900 hover:bg-amber-200"
+                className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-900 hover:bg-emerald-200"
                 title="Moderator: manage restaurants (edit, delete, add)"
               >
                 <span aria-hidden="true">📋</span>
@@ -89,7 +86,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/moderation/restaurants"
-                className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-900 hover:bg-amber-200"
+                className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-900 hover:bg-emerald-200"
                 title="Moderator tools"
               >
                 <span aria-hidden="true">⏳</span>
@@ -97,7 +94,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/moderation/reports"
-                className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-900 hover:bg-amber-200"
+                className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-900 hover:bg-emerald-200"
                 title="Moderator tools"
               >
                 <span aria-hidden="true">🛡</span>
@@ -115,7 +112,7 @@ export default function Header() {
             <SignInButton mode="modal">
               <button
                 type="button"
-                className="cursor-pointer rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-700"
+                className="cursor-pointer rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
               >
                 Log in
               </button>

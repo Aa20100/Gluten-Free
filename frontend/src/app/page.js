@@ -3,8 +3,8 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RestaurantCard from "@/components/RestaurantCard";
-import ForumRow from "@/components/ForumRow";
 import NearbyButton from "@/components/NearbyButton";
+import RecentForumPosts from "@/components/RecentForumPosts";
 
 // Placeholder data shaped like the backend Restaurant model so RestaurantCard
 // can render it directly. Swap for a real fetch of featured restaurants later.
@@ -54,42 +54,22 @@ function restaurantsHref(params) {
   return s ? `/restaurants?${s}` : "/restaurants";
 }
 
-const forumDiscussions = [
-  {
-    title: "Best GF pizza crust in Chicago?",
-    category: "Recommendations",
-    author: "@celiac_sarah",
-    date: "2 days ago",
-  },
-  {
-    title: "Cross-contamination questions at buffets",
-    category: "Safety Tips",
-    author: "@glutenfreejoe",
-    date: "4 days ago",
-  },
-  {
-    title: "Dedicated GF bakery opening downtown!",
-    category: "News",
-    author: "@bakerybeth",
-    date: "1 week ago",
-  },
-];
-
 export default function Home() {
   return (
-    <div className="flex flex-1 flex-col bg-amber-50">
+    <div className="flex flex-1 flex-col bg-white">
       <Header />
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="bg-gradient-to-b from-orange-100 via-amber-50 to-amber-50 px-4 py-16 sm:px-6 sm:py-24">
-          <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
-            <h1 className="text-4xl font-extrabold tracking-tight text-stone-900 sm:text-5xl">
-              Find restaurants you can actually eat at.
+        <section className="border-b border-emerald-100 bg-white px-4 py-14 sm:px-6 sm:py-20">
+          <div className="mx-auto flex max-w-3xl flex-col items-start gap-5">
+            <h1 className="text-4xl font-bold tracking-tight text-stone-900 sm:text-5xl">
+              Finding gluten-free food the easy way.
             </h1>
             <p className="max-w-xl text-lg text-stone-600">
-              Celiac-safe, allergen-friendly dining — vetted by people who
-              actually ask &quot;is the fryer shared?&quot;
+              A gluten-free restaurant guide. We note which kitchens have
+              dedicated fryers, trained staff, and a real GF menu, so you
+              don&apos;t have to.
             </p>
 
             {/* Plain GET form → the browser navigates to
@@ -103,11 +83,11 @@ export default function Home() {
                 type="text"
                 name="name"
                 placeholder="Search by restaurant, cuisine, or city..."
-                className="flex-1 rounded-xl border-0 bg-transparent px-4 py-3 text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                className="flex-1 rounded-xl border-0 bg-transparent px-4 py-3 text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-300"
               />
               <button
                 type="submit"
-                className="rounded-xl bg-orange-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-orange-700"
+                className="rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-emerald-700"
               >
                 Search
               </button>
@@ -130,7 +110,7 @@ export default function Home() {
         </section>
 
         {/* Popular searches */}
-        <section className="bg-orange-50 px-4 py-16 sm:px-6">
+        <section className="bg-emerald-50 px-4 py-16 sm:px-6">
           <div className="mx-auto max-w-6xl">
             <h2 className="text-2xl font-bold text-stone-900 sm:text-3xl">
               Popular Searches
@@ -140,7 +120,7 @@ export default function Home() {
                 <Link
                   key={label}
                   href={restaurantsHref(params)}
-                  className="rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition-colors hover:border-orange-400 hover:bg-orange-100 hover:text-orange-800"
+                  className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition-colors hover:border-emerald-400 hover:bg-emerald-100 hover:text-emerald-800"
                 >
                   {label}
                 </Link>
@@ -151,13 +131,19 @@ export default function Home() {
 
         {/* Recent forum discussions */}
         <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-          <h2 className="text-2xl font-bold text-stone-900 sm:text-3xl">
-            Recent Forum Discussions
-          </h2>
-          <div className="mt-8 rounded-2xl border border-orange-100 bg-white px-5 shadow-sm sm:px-6">
-            {forumDiscussions.map((discussion) => (
-              <ForumRow key={discussion.title} {...discussion} />
-            ))}
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="text-2xl font-bold text-stone-900 sm:text-3xl">
+              Recent Forum Discussions
+            </h2>
+            <Link
+              href="/forum"
+              className="text-sm font-semibold text-emerald-700 hover:underline"
+            >
+              See all →
+            </Link>
+          </div>
+          <div className="mt-6">
+            <RecentForumPosts />
           </div>
         </section>
       </main>

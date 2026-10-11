@@ -96,7 +96,7 @@ function ReportModal({ targetType, targetId, getToken, onClose }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-heading"
-        className="relative w-full max-w-md rounded-2xl border border-orange-100 bg-white p-6 shadow-xl"
+        className="relative w-full max-w-md rounded-2xl border border-emerald-100 bg-white p-6 shadow-xl"
       >
         <h2 id="report-heading" className="text-lg font-bold text-stone-900">
           Report this {targetType}
@@ -121,7 +121,7 @@ function ReportModal({ targetType, targetId, getToken, onClose }) {
                 onChange={(e) => setReason(e.target.value)}
                 rows={3}
                 placeholder="e.g. spam, harassment, unsafe medical advice"
-                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
               />
             </label>
 

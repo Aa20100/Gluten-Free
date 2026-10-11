@@ -113,13 +113,13 @@ export default function PostDetailPage({ params }) {
   }, [authLoaded, userLoaded, isSignedIn, getToken]);
 
   return (
-    <div className="flex flex-1 flex-col bg-amber-50">
+    <div className="flex flex-1 flex-col bg-white">
       <Header />
       <main className="flex-1">
         <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
           <Link
             href="/forum"
-            className="inline-flex items-center gap-1 text-sm font-medium text-orange-700 hover:text-orange-800"
+            className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 hover:text-emerald-800"
           >
             <span aria-hidden="true">←</span>
             Back to forum
@@ -173,10 +173,10 @@ function PostView({ post, me, isSignedIn, getToken, onPostChanged, onDeleted }) 
   const isMod = me?.role === "moderator";
 
   return (
-    <article className="mt-4 rounded-2xl border border-orange-100 bg-white p-6 shadow-sm sm:p-8">
+    <article className="mt-4 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm sm:p-8">
       <div className="flex flex-wrap items-center gap-2">
         {post.isPinned && (
-          <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-900">
+          <span className="rounded-full bg-emerald-200 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-900">
             Pinned
           </span>
         )}
@@ -188,7 +188,7 @@ function PostView({ post, me, isSignedIn, getToken, onPostChanged, onDeleted }) 
         {cat && (
           <Link
             href={`/forum?category=${post.category}`}
-            className="rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-semibold text-orange-800 hover:bg-orange-200"
+            className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-200"
           >
             {cat.emoji} {cat.label}
           </Link>
@@ -253,14 +253,14 @@ function PostView({ post, me, isSignedIn, getToken, onPostChanged, onDeleted }) 
       )}
 
       {/* Actions row: report + author edit/delete + moderator actions */}
-      <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-orange-100 pt-4">
+      <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-emerald-100 pt-4">
         <ReportButton targetType="post" targetId={String(post._id)} />
 
         {isAuthor && (
           <>
             <Link
               href={`/forum/${post._id}/edit`}
-              className="rounded-lg border border-orange-300 bg-white px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-50"
+              className="rounded-lg border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
             >
               Edit
             </Link>
@@ -327,8 +327,8 @@ function VoteWidget({ post, me, isSignedIn, getToken, onPostChanged }) {
         aria-pressed={upActive}
         className={`${btnBase} ${
           upActive
-            ? "border-orange-400 bg-orange-100 text-orange-800"
-            : "border-stone-200 bg-white text-stone-500 hover:border-orange-300 hover:text-orange-700"
+            ? "border-emerald-400 bg-emerald-100 text-emerald-800"
+            : "border-stone-200 bg-white text-stone-500 hover:border-emerald-300 hover:text-emerald-700"
         }`}
       >
         ▲
@@ -418,8 +418,8 @@ function ModeratorActions({ post, getToken, onPostChanged, onDeleted }) {
   };
 
   return (
-    <div className="ml-auto flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-      <span className="text-[10px] font-bold uppercase text-amber-900">
+    <div className="ml-auto flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2">
+      <span className="text-[10px] font-bold uppercase text-emerald-900">
         🛡 Moderator
       </span>
       <button
@@ -431,7 +431,7 @@ function ModeratorActions({ post, getToken, onPostChanged, onDeleted }) {
             onPostChanged(updated);
           })
         }
-        className="rounded-md border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+        className="rounded-md border border-emerald-300 bg-white px-3 py-1 text-xs font-semibold text-emerald-900 hover:bg-emerald-100 disabled:opacity-50"
       >
         {post.isPinned ? "Unpin" : "Pin"}
       </button>
@@ -444,7 +444,7 @@ function ModeratorActions({ post, getToken, onPostChanged, onDeleted }) {
             onPostChanged(updated);
           })
         }
-        className="rounded-md border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+        className="rounded-md border border-emerald-300 bg-white px-3 py-1 text-xs font-semibold text-emerald-900 hover:bg-emerald-100 disabled:opacity-50"
       >
         {post.isLocked ? "Unlock" : "Lock"}
       </button>
@@ -521,7 +521,7 @@ function CommentsSection({
   return (
     <section
       aria-labelledby="comments-heading"
-      className="mt-6 rounded-2xl border border-orange-100 bg-white p-6 shadow-sm sm:p-8"
+      className="mt-6 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm sm:p-8"
     >
       <div className="flex items-baseline justify-between">
         <h2 id="comments-heading" className="text-lg font-bold text-stone-900">
@@ -543,12 +543,12 @@ function CommentsSection({
       {isSignedIn && !postLocked ? (
         <NewCommentBox postId={postId} getToken={getToken} onSaved={reload} />
       ) : !isSignedIn ? (
-        <div className="mt-4 flex flex-col items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-stone-700 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-4 flex flex-col items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-stone-700 sm:flex-row sm:items-center sm:justify-between">
           <p>Sign in to join the discussion.</p>
           <SignInButton mode="modal">
             <button
               type="button"
-              className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
             >
               Sign in
             </button>
@@ -589,7 +589,7 @@ function CommentsSection({
                   reload={reload}
                 />
                 {replies.length > 0 && (
-                  <ul className="mt-3 space-y-3 border-l-2 border-orange-100 pl-4 sm:pl-6">
+                  <ul className="mt-3 space-y-3 border-l-2 border-emerald-100 pl-4 sm:pl-6">
                     {replies
                       .slice()
                       .sort(
@@ -703,8 +703,8 @@ function CommentItem({
       className={
         "rounded-xl border p-4 " +
         (isReply
-          ? "border-orange-50 bg-amber-50/40"
-          : "border-orange-100 bg-amber-50/60")
+          ? "border-emerald-50 bg-white/40"
+          : "border-emerald-100 bg-white/60")
       }
     >
       <div className="flex items-baseline justify-between gap-2">
@@ -730,7 +730,7 @@ function CommentItem({
             value={editBody}
             onChange={(e) => setEditBody(e.target.value)}
             rows={3}
-            className="w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+            className="w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
           />
           <div className="flex justify-end gap-2">
             <button
@@ -747,7 +747,7 @@ function CommentItem({
               type="button"
               disabled={busy || editBody.trim().length === 0}
               onClick={handleSaveEdit}
-              className="rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-50"
+              className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
             >
               {busy ? "Saving…" : "Save"}
             </button>
@@ -785,7 +785,7 @@ function CommentItem({
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="font-semibold text-stone-500 hover:text-orange-700"
+                className="font-semibold text-stone-500 hover:text-emerald-700"
               >
                 Edit
               </button>
@@ -850,7 +850,7 @@ function ReplyButton({ isSignedIn, onClick, active }) {
       onClick={isSignedIn ? onClick : undefined}
       className={
         "font-semibold transition-colors " +
-        (active ? "text-orange-700" : "text-stone-500 hover:text-orange-700")
+        (active ? "text-emerald-700" : "text-stone-500 hover:text-emerald-700")
       }
     >
       Reply
@@ -903,7 +903,7 @@ function NewCommentBox({
         onChange={(e) => setBody(e.target.value)}
         rows={compact ? 2 : 3}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+        className="w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
       />
       {error && (
         <p className="text-sm text-red-700">
@@ -923,7 +923,7 @@ function NewCommentBox({
         <button
           type="submit"
           disabled={!canSubmit}
-          className="rounded-lg bg-orange-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {busy ? "Posting…" : parent ? "Reply" : "Post comment"}
         </button>
@@ -938,9 +938,9 @@ function NewCommentBox({
 
 function DetailSkeleton() {
   return (
-    <div className="mt-4 animate-pulse rounded-2xl border border-orange-100 bg-white p-8 shadow-sm">
+    <div className="mt-4 animate-pulse rounded-2xl border border-emerald-100 bg-white p-8 shadow-sm">
       <div className="mb-3 flex gap-2">
-        <div className="h-4 w-20 rounded-full bg-orange-100" />
+        <div className="h-4 w-20 rounded-full bg-emerald-100" />
       </div>
       <div className="h-8 w-3/4 rounded bg-stone-200" />
       <div className="mt-2 h-3 w-1/3 rounded bg-stone-100" />
@@ -956,7 +956,7 @@ function DetailSkeleton() {
 function ErrorCard({ error, is404 }) {
   if (is404) {
     return (
-      <div className="mt-8 rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-10 text-center">
+      <div className="mt-8 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-10 text-center">
         <p className="text-5xl" aria-hidden="true">💬</p>
         <h1 className="mt-4 text-2xl font-bold text-stone-900">Post not found</h1>
         <p className="mt-2 text-stone-600">
@@ -964,7 +964,7 @@ function ErrorCard({ error, is404 }) {
         </p>
         <Link
           href="/forum"
-          className="mt-6 inline-block rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-700"
+          className="mt-6 inline-block rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
         >
           Browse the forum
         </Link>

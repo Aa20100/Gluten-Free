@@ -46,7 +46,7 @@ export default function ModeratorOnly({ children }) {
 
   if (state.status === "success" && !state.isMod) {
     return (
-      <div className="mt-8 rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-8 text-center">
+      <div className="mt-8 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-8 text-center">
         <p className="text-5xl" aria-hidden="true">🛡</p>
         <h2 className="mt-4 text-xl font-bold text-stone-900">
           You don&apos;t have permission to view this page
@@ -56,7 +56,7 @@ export default function ModeratorOnly({ children }) {
         </p>
         <Link
           href="/"
-          className="mt-6 inline-block rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-700"
+          className="mt-6 inline-block rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
         >
           Back to home
         </Link>

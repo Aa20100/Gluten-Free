@@ -23,13 +23,13 @@ export default function SuggestRestaurantPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-amber-50">
+    <div className="flex flex-1 flex-col bg-white">
       <Header />
       <main className="flex-1">
         <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
           <Link
             href="/restaurants"
-            className="inline-flex items-center gap-1 text-sm font-medium text-orange-700 hover:text-orange-800"
+            className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 hover:text-emerald-800"
           >
             <span aria-hidden="true">←</span>
             Back to restaurants
@@ -60,12 +60,11 @@ export default function SuggestRestaurantPage() {
 
 function ThanksScreen({ onSuggestAnother }) {
   return (
-    <div className="flex flex-1 flex-col bg-amber-50">
+    <div className="flex flex-1 flex-col bg-white">
       <Header />
       <main className="flex flex-1 items-center justify-center px-4 py-16">
         <div className="max-w-md rounded-2xl border border-emerald-200 bg-emerald-50 p-8 text-center">
-          <p className="text-5xl" aria-hidden="true">🌾</p>
-          <h1 className="mt-4 text-2xl font-bold text-stone-900">Thanks!</h1>
+          <h1 className="text-2xl font-bold text-stone-900">Thanks!</h1>
           <p className="mt-2 text-stone-700">
             A moderator will review your suggestion and, if it looks good,
             publish it to the map.
@@ -73,7 +72,7 @@ function ThanksScreen({ onSuggestAnother }) {
           <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
             <Link
               href="/"
-              className="rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-700"
+              className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
             >
               Back to home
             </Link>

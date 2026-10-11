@@ -36,13 +36,13 @@ export default function EditRestaurantPage({ params }) {
   };
 
   return (
-    <div className="flex flex-1 flex-col bg-amber-50">
+    <div className="flex flex-1 flex-col bg-white">
       <Header />
       <main className="flex-1">
         <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
           <Link
             href={`/restaurants/${id}`}
-            className="inline-flex items-center gap-1 text-sm font-medium text-orange-700 hover:text-orange-800"
+            className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 hover:text-emerald-800"
           >
             <span aria-hidden="true">←</span>
             Back to restaurant

@@ -234,13 +234,13 @@ export default function RestaurantDetailPage({ params }) {
   };
 
   return (
-    <div className="flex flex-1 flex-col bg-amber-50">
+    <div className="flex flex-1 flex-col bg-white">
       <Header />
       <main className="flex-1">
         <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
           <Link
             href="/restaurants"
-            className="inline-flex items-center gap-1 text-sm font-medium text-orange-700 hover:text-orange-800"
+            className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 hover:text-emerald-800"
           >
             <span aria-hidden="true">←</span>
             Back to restaurants
@@ -333,7 +333,7 @@ function RestaurantDetail({
   return (
     <>
       {/* Hero — gallery when we have images, plate emoji as fallback. */}
-      <div className="mt-4 overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm">
+      <div className="mt-4 overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm">
         <RestaurantGallery imageUrls={imageUrls} alt={name} />
 
         <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start sm:justify-between sm:p-8">
@@ -345,7 +345,7 @@ function RestaurantDetail({
               {isModerator && (
                 <Link
                   href={`/restaurants/${restaurantId}/edit`}
-                  className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-900 hover:bg-amber-100"
+                  className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-white px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-900 hover:bg-emerald-100"
                   title="Moderator edit"
                 >
                   <span aria-hidden="true">✎</span>
@@ -368,7 +368,7 @@ function RestaurantDetail({
                   Know this restaurant well?{" "}
                   <Link
                     href={suggestUpdateHref}
-                    className="font-semibold text-orange-700 hover:text-orange-800"
+                    className="font-semibold text-emerald-700 hover:text-emerald-800"
                   >
                     Suggest an update
                   </Link>
@@ -380,7 +380,7 @@ function RestaurantDetail({
                 {typeLabels.map((t) => (
                   <span
                     key={`type-${t}`}
-                    className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-800"
+                    className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800"
                   >
                     {t}
                   </span>
@@ -388,7 +388,7 @@ function RestaurantDetail({
                 {cuisine.map((c) => (
                   <span
                     key={`cuisine-${c}`}
-                    className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800"
+                    className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800"
                   >
                     {c}
                   </span>
@@ -468,7 +468,7 @@ function RestaurantDetail({
           <dl className="space-y-3 text-sm">
             {phone && (
               <DlRow term="Phone">
-                <a href={`tel:${phone}`} className="text-orange-700 hover:text-orange-800">
+                <a href={`tel:${phone}`} className="text-emerald-700 hover:text-emerald-800">
                   {phone}
                 </a>
               </DlRow>
@@ -479,7 +479,7 @@ function RestaurantDetail({
                   href={websiteHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="break-all text-orange-700 hover:text-orange-800"
+                  className="break-all text-emerald-700 hover:text-emerald-800"
                 >
                   {website}
                 </a>
@@ -504,7 +504,7 @@ function RestaurantDetail({
               href={mapsHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-orange-700 hover:text-orange-800"
+              className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-emerald-700 hover:text-emerald-800"
             >
               <span aria-hidden="true">🗺️</span>
               View on Google Maps
@@ -544,7 +544,7 @@ function FavoriteButton({ isSignedIn, userLoaded, isFavorite, onToggle }) {
         <button
           type="button"
           disabled={disabled}
-          className={`${baseClasses} border-orange-300 bg-white text-orange-700 hover:bg-orange-50`}
+          className={`${baseClasses} border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50`}
         >
           <span aria-hidden="true">🤍</span>
           Save to favorites
@@ -562,7 +562,7 @@ function FavoriteButton({ isSignedIn, userLoaded, isFavorite, onToggle }) {
       className={
         isFavorite
           ? `${baseClasses} border-red-200 bg-red-50 text-red-700 hover:bg-red-100`
-          : `${baseClasses} border-orange-300 bg-white text-orange-700 hover:bg-orange-50`
+          : `${baseClasses} border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50`
       }
     >
       <span aria-hidden="true">{isFavorite ? "❤️" : "🤍"}</span>
@@ -586,17 +586,17 @@ function ReviewsSection({
   getToken,
 }) {
   return (
-    <section className="mt-6 rounded-2xl border border-orange-100 bg-white p-6 shadow-sm sm:p-8">
+    <section className="mt-6 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm sm:p-8">
       <h2 className="text-lg font-bold text-stone-900">Reviews</h2>
 
       {/* Sign-in prompt */}
       {userLoaded && !isSignedIn && (
-        <div className="mt-4 flex flex-col items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-stone-700 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-4 flex flex-col items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-stone-700 sm:flex-row sm:items-center sm:justify-between">
           <p>Sign in to share your experience at this restaurant.</p>
           <SignInButton mode="modal">
             <button
               type="button"
-              className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
             >
               Sign in to review
             </button>
@@ -646,7 +646,7 @@ function ReviewsSection({
 function ReviewItem({ review }) {
   const images = Array.isArray(review.imageUrls) ? review.imageUrls : [];
   return (
-    <li className="rounded-xl border border-orange-100 bg-amber-50/60 p-4">
+    <li className="rounded-xl border border-emerald-100 bg-white/60 p-4">
       <div className="flex items-baseline justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-stone-900">
@@ -759,7 +759,7 @@ function MyReviewForm({ existing, restaurantId, getToken, onSaved, onDeleted }) 
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-4 rounded-xl border border-orange-200 bg-orange-50/40 p-4 sm:p-5"
+      className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 sm:p-5"
     >
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-bold uppercase tracking-wide text-stone-600">
@@ -792,7 +792,7 @@ function MyReviewForm({ existing, restaurantId, getToken, onSaved, onDeleted }) 
           onChange={(e) => setText(e.target.value)}
           placeholder="How was the gluten-free experience?"
           rows={4}
-          className="w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+          className="w-full rounded-lg border border-stone-200 px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
         />
       </label>
 
@@ -853,7 +853,7 @@ function MyReviewForm({ existing, restaurantId, getToken, onSaved, onDeleted }) 
         <button
           type="submit"
           disabled={!canSubmit}
-          className="rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? "Saving…" : isEditing ? "Save changes" : "Post review"}
         </button>
@@ -904,7 +904,7 @@ function RestaurantGallery({ imageUrls, alt }) {
 
   if (total === 0) {
     return (
-      <div className="flex h-56 items-center justify-center bg-gradient-to-br from-orange-100 to-amber-100 text-6xl sm:h-72">
+      <div className="flex h-56 items-center justify-center bg-gradient-to-br from-emerald-100 to-emerald-100 text-6xl sm:h-72">
         🍽️
       </div>
     );
@@ -997,8 +997,8 @@ function RestaurantGallery({ imageUrls, alt }) {
                   className={
                     "block h-16 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-colors " +
                     (active
-                      ? "border-orange-500"
-                      : "border-transparent hover:border-orange-200")
+                      ? "border-emerald-500"
+                      : "border-transparent hover:border-emerald-200")
                   }
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1040,7 +1040,7 @@ function CarouselArrow({ direction, onClick }) {
 
 function Section({ title, children }) {
   return (
-    <section className="mt-6 rounded-2xl border border-orange-100 bg-white p-6 shadow-sm sm:p-8">
+    <section className="mt-6 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm sm:p-8">
       <h2 className="mb-4 text-lg font-bold text-stone-900">{title}</h2>
       {children}
     </section>
@@ -1076,20 +1076,20 @@ function CheckMark() {
 function DetailSkeleton() {
   return (
     <div className="mt-4 animate-pulse space-y-6">
-      <div className="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm">
-        <div className="h-56 bg-orange-50 sm:h-72" />
+      <div className="overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm">
+        <div className="h-56 bg-emerald-50 sm:h-72" />
         <div className="space-y-3 p-8">
           <div className="h-7 w-2/3 rounded bg-stone-200" />
           <div className="h-4 w-1/3 rounded bg-stone-100" />
           <div className="flex gap-2">
-            <div className="h-6 w-16 rounded-full bg-orange-100" />
-            <div className="h-6 w-20 rounded-full bg-amber-100" />
+            <div className="h-6 w-16 rounded-full bg-emerald-100" />
+            <div className="h-6 w-20 rounded-full bg-emerald-100" />
           </div>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="rounded-2xl border border-orange-100 bg-white p-8 shadow-sm">
+          <div key={i} className="rounded-2xl border border-emerald-100 bg-white p-8 shadow-sm">
             <div className="mb-4 h-5 w-1/3 rounded bg-stone-200" />
             <div className="h-4 w-2/3 rounded bg-stone-100" />
           </div>
@@ -1103,7 +1103,7 @@ function ErrorCard({ message, detail, is404, inline }) {
   if (is404) {
     return (
       <div
-        className={`${inline ? "" : "mt-8"} rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-10 text-center`}
+        className={`${inline ? "" : "mt-8"} rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-10 text-center`}
       >
         <p className="text-5xl" aria-hidden="true">🍽️</p>
         <h1 className="mt-4 text-2xl font-bold text-stone-900">Restaurant not found</h1>
@@ -1112,7 +1112,7 @@ function ErrorCard({ message, detail, is404, inline }) {
         </p>
         <Link
           href="/restaurants"
-          className="mt-6 inline-block rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-700"
+          className="mt-6 inline-block rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
         >
           Browse restaurants
         </Link>

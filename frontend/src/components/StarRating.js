@@ -22,7 +22,7 @@ export default function StarRating({
     >
       {[1, 2, 3, 4, 5].map((n) => {
         const filled = n <= Math.round(value);
-        const cls = filled ? "text-amber-500" : "text-stone-300";
+        const cls = filled ? "text-white0" : "text-stone-300";
         if (interactive) {
           return (
             <button
@@ -32,7 +32,7 @@ export default function StarRating({
               aria-checked={n === value}
               aria-label={`${n} star${n === 1 ? "" : "s"}`}
               onClick={() => onChange(n)}
-              className={`${cls} transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 rounded`}
+              className={`${cls} transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded`}
             >
               ★
             </button>

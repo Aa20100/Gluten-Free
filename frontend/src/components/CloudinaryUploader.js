@@ -71,7 +71,7 @@ export default function CloudinaryUploader({
           // Allow re-picking the same file after removal.
           if (inputRef.current) inputRef.current.value = "";
         }}
-        className="block w-full text-sm text-stone-600 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-orange-700"
+        className="block w-full text-sm text-stone-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-emerald-700"
       />
 
       {error && <p className="text-sm text-amber-700">{error}</p>}

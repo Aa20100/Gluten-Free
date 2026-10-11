@@ -56,7 +56,7 @@ export default function ProfilePage() {
   }, [authLoaded]);
 
   return (
-    <div className="flex flex-1 flex-col bg-amber-50">
+    <div className="flex flex-1 flex-col bg-white">
       <Header />
 
       <main className="flex-1">
@@ -90,7 +90,7 @@ export default function ProfilePage() {
             )}
             {db.status === "error" && (
               <p className="mt-3 text-sm text-red-700">
-                Couldn&apos;t load your SafeBite record: {db.error?.message}
+                Couldn&apos;t load your safelyGF record: {db.error?.message}
               </p>
             )}
           </Section>
@@ -144,7 +144,7 @@ export default function ProfilePage() {
               />
             )}
             {myReviews.status === "success" && myReviews.data.length > 0 && (
-              <ul className="divide-y divide-orange-100">
+              <ul className="divide-y divide-emerald-100">
                 {myReviews.data.map((r) => (
                   <MyReviewRow key={r._id} review={r} />
                 ))}
@@ -172,7 +172,7 @@ function MyReviewRow({ review }) {
           {r?._id ? (
             <Link
               href={`/restaurants/${r._id}`}
-              className="text-base font-semibold text-stone-900 hover:text-orange-800"
+              className="text-base font-semibold text-stone-900 hover:text-emerald-800"
             >
               {r.name || "Untitled restaurant"}
             </Link>
@@ -202,7 +202,7 @@ function MyReviewRow({ review }) {
       {r?._id && (
         <Link
           href={`/restaurants/${r._id}`}
-          className="shrink-0 text-sm font-semibold text-orange-700 hover:text-orange-800"
+          className="shrink-0 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
         >
           View & edit →
         </Link>
@@ -213,7 +213,7 @@ function MyReviewRow({ review }) {
 
 function Section({ title, children }) {
   return (
-    <section className="mt-8 rounded-2xl border border-orange-100 bg-white p-6 shadow-sm sm:p-8">
+    <section className="mt-8 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm sm:p-8">
       <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-stone-500">
         {title}
       </h2>
@@ -252,13 +252,13 @@ function ErrorLine({ children, detail }) {
 
 function EmptyState({ title, hint, cta }) {
   return (
-    <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-8 text-center">
+    <div className="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-8 text-center">
       <p className="text-lg font-semibold text-stone-800">{title}</p>
       {hint && <p className="mt-2 text-sm text-stone-600">{hint}</p>}
       {cta && (
         <Link
           href={cta.href}
-          className="mt-4 inline-block rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-700"
+          className="mt-4 inline-block rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
         >
           {cta.label}
         </Link>
@@ -273,9 +273,9 @@ function CardGridSkeleton() {
       {Array.from({ length: 3 }).map((_, i) => (
         <div
           key={i}
-          className="animate-pulse overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm"
+          className="animate-pulse overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm"
         >
-          <div className="h-40 bg-orange-50" />
+          <div className="h-40 bg-emerald-50" />
           <div className="space-y-3 p-5">
             <div className="h-5 w-2/3 rounded bg-stone-200" />
             <div className="h-4 w-1/3 rounded bg-stone-100" />
@@ -288,7 +288,7 @@ function CardGridSkeleton() {
 
 function ReviewsSkeleton() {
   return (
-    <ul className="animate-pulse divide-y divide-orange-100">
+    <ul className="animate-pulse divide-y divide-emerald-100">
       {Array.from({ length: 3 }).map((_, i) => (
         <li key={i} className="space-y-2 py-4">
           <div className="h-4 w-1/3 rounded bg-stone-200" />
